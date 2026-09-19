@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">smsgateway</string>
+    <string name="hint_backend_url">Backend URL (https://erp.example.com)</string>
+    <string name="hint_gateway_token">Gateway Token</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_start_service">Start Service</string>
+    <string name="btn_stop_service">Stop Service</string>
+    <string name="btn_test_send">Test Send</string>
+    <string name="status_service_running">Service: Running</string>
+    <string name="status_service_stopped">Service: Stopped</string>
+    <string name="poll_interval">Polling every 15s</string>
+    <string name="last_poll">Last poll: %s</string>
+    <string name="pending_count">Pending: %d</string>
+    <string name="sent_count">Sent: %d</string>
+    <string name="failed_count">Failed: %d</string>
+    <string name="offline_banner">Offline — no internet</string>
+    <string name="permission_sms_rationale">SMS permission is required to send SMS via your SIM. Please grant it.</string>
+    <string name="permission_notif_rationale">Notification permission is required to show foreground service status.</string>
+    <string name="msg_saved">Settings saved</string>
+    <string name="msg_need_https">Backend URL must start with https://</string>
+    <string name="msg_grant_sms_first">Grant SMS permission first</string>
+    <string name="msg_enter_url_token">Enter Backend URL and Token first</string>
+    <string name="msg_test_enqueued">Test SMS enqueued via backend</string>
+    <string name="msg_test_failed">Test send failed: %s</string>
+    <string name="channel_name">smsgateway</string>
+    <string name="channel_desc">Shows smsgateway polling status</string>
+    <string name="notif_title">smsgateway active</string>
+    <string name="notif_stop">Stop</string>
+    <string name="battery_title">Battery Optimization</string>
+    <string name="battery_msg">Allow ignoring battery optimizations so polling survives Doze? This keeps SMS delivery reliable.</string>
+    <string name="battery_allow">Allow</string>
+    <string name="battery_skip">Skip</string>
+    <string name="hint_test_phone">Test phone number (10-15 digits)</string>
+    <string name="hint_test_message">Test message</string>
+</resources>

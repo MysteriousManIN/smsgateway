@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="@color/border"
+    app:cardBackgroundColor="@color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Legacy leftBar keep for compat hidden -->
+        <View
+            android:id="@+id/leftBar"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <View
+                android:id="@+id/dotStatus"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:background="@drawable/bg_dot_offline" />
+
+            <TextView
+                android:id="@+id/tvName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="Default"
+                android:textSize="16sp"
+                android:textColor="@color/text_dark"
+                android:fontFamily="@font/figtree"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/tvStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="idle"
+                android:textSize="10sp"
+                android:letterSpacing="0.06"
+                android:textColor="@color/text_muted"
+                android:fontFamily="@font/figtree"
+                android:background="@drawable/bg_chip_white_rounded16"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="4dp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvUrl"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="https://erp.example.com"
+            android:textSize="12sp"
+            android:textColor="@color/text_muted"
+            android:fontFamily="@font/figtree"
+            android:maxLines="1"
+            android:ellipsize="middle"
+            android:layout_marginTop="10dp" />
+
+        <TextView
+            android:id="@+id/tvTokenMasked"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="tokn••••1234"
+            android:textSize="11sp"
+            android:textColor="#6B7280"
+            android:fontFamily="@font/figtree"
+            android:background="@drawable/bg_mono_grey_6"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:layout_marginTop="6dp" />
+
+        <!-- Connection switch — single (Test Send removed) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="14dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Connection"
+                android:textSize="12sp"
+                android:textColor="@color/text_dark"
+                android:fontFamily="@font/figtree" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchEnabled"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:thumbTint="@color/switch_thumb_mono"
+                app:trackTint="@color/switch_track_mono"
+                app:useMaterialThemeColors="false" />
+        </LinearLayout>
+
+        <!-- Buttons row: Edit / Delete (Test removed from card) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="14dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnEdit"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_weight="1"
+                android:text="Edit"
+                android:textSize="11sp"
+                android:textColor="@color/white"
+                app:backgroundTint="@color/text_dark"
+                android:fontFamily="@font/figtree"
+                app:cornerRadius="6dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDelete"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="Delete"
+                android:textColor="@color/text_dark"
+                android:textSize="11sp"
+                app:strokeColor="@color/border"
+                android:fontFamily="@font/figtree"
+                app:cornerRadius="6dp" />
+        </LinearLayout>
+
+        <!-- Per-connection Clear logs button — monochrome outline 6dp -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnClearLogs"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:text="Clear logs"
+            android:textSize="11sp"
+            android:textColor="@color/text_muted"
+            app:strokeColor="@color/border"
+            android:fontFamily="@font/figtree"
+            app:cornerRadius="6dp"
+            android:layout_marginTop="8dp" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

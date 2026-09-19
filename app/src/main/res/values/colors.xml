@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Monochrome sharp minimal — white/black/grey only, no pastels -->
+    <color name="bg_light">#FFFAFAFA</color>
+    <color name="bg_surface">#FFFFFFFF</color>
+    <color name="bg_search">#FFFFFFFF</color>
+    <color name="border">#FFE9ECEF</color>
+    <color name="border_light">#FFF1F3F5</color>
+    <color name="code_bg">#FFF5F5F5</color>
+    <color name="grey_bg">#FFF5F5F5</color>
+    <color name="text_dark">#FF111111</color>
+    <color name="text_primary">#FF111111</color>
+    <color name="text_muted">#FF6B7280</color>
+    <color name="text_secondary">#FF6C757D</color>
+    <color name="text_hint">#FFADB5BD</color>
+    <color name="primary">#FF111111</color>
+    <color name="primaryBlue">#FF111111</color>
+    <color name="primary_accent">#FF111111</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+    <color name="offline_red">#FF6B7280</color>
+    <color name="success_green">#FF111111</color>
+    <color name="dot_online">#FF111111</color>
+    <color name="dot_offline">#FF9CA3AF</color>
+    <color name="dot_idle">#FFD1D5DB</color>
+
+    <!-- Template colorful accents — mapped to monochrome greys for compat -->
+    <color name="accentRed">#FF111111</color>
+    <color name="accentRedBright">#FF111111</color>
+    <color name="accentRedBg">#FFF5F5F5</color>
+    <color name="accentRedLight">#FFFAFAFA</color>
+    <color name="accentYellow">#FF9CA3AF</color>
+    <color name="accentYellowBg">#FFF5F5F5</color>
+    <color name="accentYellowDeep">#FF6B7280</color>
+    <color name="accentMint">#FF111111</color>
+    <color name="accentMintBg">#FFF5F5F5</color>
+    <color name="accentMintLight">#FFFAFAFA</color>
+    <color name="accentLavender">#FFF5F5F5</color>
+    <color name="accentPeach">#FFFAFAFA</color>
+    <color name="accentCream">#FFFAFAFA</color>
+    <color name="accentBlue">#FF111111</color>
+    <color name="accentBlueLight">#FF111111</color>
+    <color name="avatarYellow">#FFF5F5F5</color>
+
+    <!-- Legacy pastel names kept for compatibility — mapped to monochrome -->
+    <color name="blue_bg">#FFFAFAFA</color>
+    <color name="blue_bg_soft">#FFF5F5F5</color>
+    <color name="blue_bg_light">#FFFFFFFF</color>
+    <color name="lavender">#FFF5F5F5</color>
+    <color name="lavender_dark">#FFE9ECEF</color>
+    <color name="sky">#FFF5F5F5</color>
+    <color name="sky_dark">#FFE9ECEF</color>
+    <color name="yellow">#FFF5F5F5</color>
+    <color name="yellow_dark">#FFE9ECEF</color>
+    <color name="peach">#FFFAFAFA</color>
+    <color name="peach_dark">#FFE9ECEF</color>
+    <color name="dark_nav">#FF111111</color>
+    <color name="dark_nav_light">#FF212529</color>
+    <color name="purple_200">#FFADB5BD</color>
+    <color name="purple_500">#FF111111</color>
+    <color name="purple_700">#FF111111</color>
+    <color name="teal_200">#FFADB5BD</color>
+    <color name="teal_700">#FF495057</color>
+    <color name="card_stroke">#FFE9ECEF</color>
+    <color name="chip_bg">#FFFFFFFF</color>
+
+    <!-- Monochrome explicit -->
+    <color name="mono_border">#FFE9ECEF</color>
+    <color name="mono_card">#FFFFFFFF</color>
+    <color name="mono_text">#FF111111</color>
+    <color name="mono_bg">#FFFAFAFA</color>
+    <color name="mono_muted">#FF6B7280</color>
+    <color name="mono_black">#FF111111</color>
+    <color name="mono_grey_bg">#FFF5F5F5</color>
+</resources>

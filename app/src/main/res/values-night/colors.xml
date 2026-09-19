@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark Mode Monochrome Sharp -->
+    <color name="bg_light">#FF121214</color>
+    <color name="bg_surface">#FF1E1E22</color>
+    <color name="bg_search">#FF1E1E22</color>
+    <color name="border">#FF2E2E36</color>
+    <color name="border_light">#FF2E2E36</color>
+    <color name="code_bg">#FF27272E</color>
+    <color name="grey_bg">#FF27272E</color>
+    <color name="text_dark">#FFF4F4F6</color>
+    <color name="text_primary">#FFF4F4F6</color>
+    <color name="text_muted">#FF9CA3AF</color>
+    <color name="text_secondary">#FF9CA3AF</color>
+    <color name="text_hint">#FF6B7280</color>
+    <color name="primary">#FFFFFFFF</color>
+    <color name="primaryBlue">#FFFFFFFF</color>
+    <color name="primary_accent">#FFFFFFFF</color>
+    <color name="white">#FF1E1E22</color>
+    <color name="black">#FFFFFFFF</color>
+    <color name="offline_red">#FF9CA3AF</color>
+    <color name="success_green">#FFF4F4F6</color>
+    <color name="dot_online">#FFFFFFFF</color>
+    <color name="dot_offline">#FF6B7280</color>
+    <color name="dot_idle">#FF3F3F46</color>
+
+    <!-- Monochrome explicit -->
+    <color name="mono_bg">#FF121214</color>
+    <color name="mono_card">#FF1E1E22</color>
+    <color name="mono_text">#FFF4F4F6</color>
+    <color name="mono_muted">#FF9CA3AF</color>
+    <color name="mono_border">#FF2E2E36</color>
+    <color name="mono_black">#FFFFFFFF</color>
+    <color name="mono_grey_bg">#FF27272E</color>
+    <color name="card_stroke">#FF2E2E36</color>
+    <color name="chip_bg">#FF1E1E22</color>
+
+    <!-- Accents mapped to dark palette -->
+    <color name="accentRed">#FFFFFFFF</color>
+    <color name="accentRedBright">#FFFFFFFF</color>
+    <color name="accentRedBg">#FF27272E</color>
+    <color name="accentRedLight">#FF121214</color>
+    <color name="accentYellow">#FF9CA3AF</color>
+    <color name="accentYellowBg">#FF27272E</color>
+    <color name="accentYellowDeep">#FF6B7280</color>
+    <color name="accentMint">#FFFFFFFF</color>
+    <color name="accentMintBg">#FF27272E</color>
+    <color name="accentMintLight">#FF121214</color>
+    <color name="accentLavender">#FF27272E</color>
+    <color name="accentPeach">#FF121214</color>
+    <color name="accentCream">#FF121214</color>
+    <color name="accentBlue">#FFFFFFFF</color>
+    <color name="accentBlueLight">#FFFFFFFF</color>
+    <color name="avatarYellow">#FF27272E</color>
+
+    <!-- Legacy mapped -->
+    <color name="blue_bg">#FF121214</color>
+    <color name="blue_bg_soft">#FF27272E</color>
+    <color name="blue_bg_light">#FF1E1E22</color>
+    <color name="lavender">#FF27272E</color>
+    <color name="lavender_dark">#FF2E2E36</color>
+    <color name="sky">#FF27272E</color>
+    <color name="sky_dark">#FF2E2E36</color>
+    <color name="yellow">#FF27272E</color>
+    <color name="yellow_dark">#FF2E2E36</color>
+    <color name="peach">#FF121214</color>
+    <color name="peach_dark">#FF2E2E36</color>
+    <color name="dark_nav">#FFFFFFFF</color>
+    <color name="dark_nav_light">#FF27272E</color>
+    <color name="purple_200">#FF6B7280</color>
+    <color name="purple_500">#FFFFFFFF</color>
+    <color name="purple_700">#FFFFFFFF</color>
+    <color name="teal_200">#FF6B7280</color>
+    <color name="teal_700">#FF9CA3AF</color>
+</resources>
