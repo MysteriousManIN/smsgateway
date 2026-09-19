@@ -12,8 +12,8 @@
         <item name="android:statusBarColor">@color/mono_bg</item>
         <item name="android:navigationBarColor">@color/mono_bg</item>
         <item name="android:forceDarkAllowed">false</item>
-        <item name="android:fontFamily">@font/figtree</item>
-        <item name="fontFamily">@font/figtree</item>
+        <item name="android:fontFamily">@font/google_sans_code</item>
+        <item name="fontFamily">@font/google_sans_code</item>
         <!-- ponytail: monochrome sharp — no elevation, sharp 6-8dp, light only -->
     </style>
 </resources>

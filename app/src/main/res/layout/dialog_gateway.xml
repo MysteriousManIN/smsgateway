@@ -14,7 +14,7 @@
         android:text="Add Gateway"
         android:textSize="18sp"
         android:textColor="@color/text_dark"
-        android:fontFamily="@font/figtree"
+        android:fontFamily="@font/google_sans_code"
         android:textStyle="bold"
         android:layout_marginBottom="16dp" />
 
@@ -33,7 +33,7 @@
             android:layout_height="wrap_content"
             android:singleLine="true"
             android:inputType="textCapWords"
-            android:fontFamily="@font/figtree"
+            android:fontFamily="@font/google_sans_code"
             android:textSize="14sp" />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -53,7 +53,7 @@
             android:singleLine="true"
             android:inputType="textUri"
             android:hint="https://erp1.example.com"
-            android:fontFamily="@font/figtree"
+            android:fontFamily="@font/google_sans_code"
             android:textSize="14sp" />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -73,7 +73,7 @@
             android:layout_height="wrap_content"
             android:singleLine="true"
             android:inputType="textPassword"
-            android:fontFamily="@font/figtree"
+            android:fontFamily="@font/google_sans_code"
             android:textSize="14sp" />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -90,7 +90,7 @@
             android:text="Enabled"
             android:textSize="14sp"
             android:textColor="@color/text_dark"
-            android:fontFamily="@font/figtree"
+            android:fontFamily="@font/google_sans_code"
             android:layout_weight="1" />
 
         <com.google.android.material.switchmaterial.SwitchMaterial
@@ -112,7 +112,7 @@
         android:textColor="@color/text_dark"
         app:strokeColor="@color/border"
         app:cornerRadius="8dp"
-        android:fontFamily="@font/figtree"
+        android:fontFamily="@font/google_sans_code"
         android:layout_marginBottom="12dp" />
 
     <LinearLayout
@@ -130,7 +130,7 @@
             android:textColor="@color/text_dark"
             app:strokeColor="@color/border"
             app:cornerRadius="8dp"
-            android:fontFamily="@font/figtree" />
+            android:fontFamily="@font/google_sans_code" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSave"
@@ -142,6 +142,6 @@
             android:textColor="@color/white"
             app:backgroundTint="@color/text_dark"
             app:cornerRadius="8dp"
-            android:fontFamily="@font/figtree" />
+            android:fontFamily="@font/google_sans_code" />
     </LinearLayout>
 </LinearLayout>

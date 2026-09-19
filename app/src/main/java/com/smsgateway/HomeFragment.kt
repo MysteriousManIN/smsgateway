@@ -3,18 +3,12 @@ package com.smsgateway
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.card.MaterialCardView
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,10 +24,6 @@ class HomeFragment : Fragment() {
     private lateinit var tvFailed: TextView
     private lateinit var tvGatewaysCount: TextView
     private lateinit var tvGreeting: TextView
-    private lateinit var etSearch: EditText
-    private lateinit var btnSearchClear: ImageView
-    private lateinit var rvLogs: RecyclerView
-    private lateinit var logAdapter: LogAdapter
 
     // legacy hidden refs kept for compat
     private var tvServiceStatus: TextView? = null
@@ -46,9 +36,6 @@ class HomeFragment : Fragment() {
     private var spinnerGateways: Spinner? = null
     private var etTestPhone: com.google.android.material.textfield.TextInputEditText? = null
     private var etTestMessage: com.google.android.material.textfield.TextInputEditText? = null
-
-    private var currentFilter: String = ""
-    private var allLogs: List<String> = emptyList()
 
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
     private val refreshRunnable = object : Runnable {
@@ -69,7 +56,8 @@ class HomeFragment : Fragment() {
         tvFailed = view.findViewById(R.id.tvFailed)
         tvGatewaysCount = view.findViewById(R.id.tvGatewaysCount)
         tvGreeting = view.findViewById(R.id.tvGreeting)
-        // legacy may be gone
+
+        // legacy views
         tvServiceStatus = view.findViewById(R.id.tvServiceStatus)
         tvLastPoll = view.findViewById(R.id.tvLastPoll)
         tvWelcomeSub = view.findViewById(R.id.tvWelcomeSub)
@@ -80,35 +68,10 @@ class HomeFragment : Fragment() {
         spinnerGateways = view.findViewById(R.id.spinnerGateways)
         etTestPhone = view.findViewById(R.id.etTestPhone)
         etTestMessage = view.findViewById(R.id.etTestMessage)
-        etSearch = view.findViewById(R.id.etSearch)
-        btnSearchClear = view.findViewById(R.id.btnSearchClear)
-        rvLogs = view.findViewById(R.id.rvLogs)
-
-        logAdapter = LogAdapter()
-        rvLogs.layoutManager = LinearLayoutManager(requireContext())
-        rvLogs.adapter = logAdapter
-        allLogs = LogStore.getAll()
-        LogStore.addListener {
-            allLogs = LogStore.getAll()
-            activity?.runOnUiThread { applyLogFilter() }
-        }
-        applyLogFilter()
 
         view.findViewById<View>(R.id.btnToggleService)?.setOnClickListener { toggleService() }
         view.findViewById<View>(R.id.btnBattery)?.setOnClickListener { (activity as? MainActivity)?.requestBatteryExemption() }
         view.findViewById<View>(R.id.btnTestSend)?.setOnClickListener { doTestSend(view) }
-
-        // Search filter — monochrome: filter logs only
-        etSearch.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                currentFilter = s?.toString()?.trim()?.lowercase() ?: ""
-                btnSearchClear.visibility = if (currentFilter.isEmpty()) View.GONE else View.VISIBLE
-                applyLogFilter()
-            }
-        })
-        btnSearchClear.setOnClickListener { etSearch.text.clear() }
 
         updateGreeting()
         refreshStats()
@@ -140,7 +103,6 @@ class HomeFragment : Fragment() {
     }
 
     private fun refreshStats() {
-        // service status hidden now — keep for compat if exists
         val running = SmsForegroundService.isRunning
         tvServiceStatus?.let {
             it.text = if (running) getString(R.string.status_service_running) else getString(R.string.status_service_stopped)
@@ -153,7 +115,6 @@ class HomeFragment : Fragment() {
         val backends = prefs.getBackends()
         val enabled = backends.filter { it.enabled }
         tvWelcomeSub?.text = "${backends.size} gateways • ${enabled.size} active • polling 15s"
-        // Gateways card shows active count numeric; sub stays "active"
         tvGatewaysCount.text = enabled.size.toString()
         tvGatewayCountActive?.text = enabled.size.toString()
         view?.findViewById<TextView>(R.id.tvGatewaysSub)?.let {
@@ -161,11 +122,6 @@ class HomeFragment : Fragment() {
         }
         tvActivitySub?.text = "Failed: ${prefs.failedCount} • Sent: ${prefs.sentCount}"
         tvPollInfo?.text = "poll 15s"
-    }
-
-    private fun applyLogFilter() {
-        val filtered = if (currentFilter.isEmpty()) allLogs else allLogs.filter { it.lowercase().contains(currentFilter) }
-        logAdapter.update(filtered)
     }
 
     private fun setupSpinner() {
@@ -201,7 +157,6 @@ class HomeFragment : Fragment() {
     }
 
     private fun doTestSend(root: View) {
-        // hidden in new UI but keep for compat if invoked via hidden button
         val spinner = spinnerGateways
         val phoneView = etTestPhone
         val msgView = etTestMessage
@@ -212,7 +167,7 @@ class HomeFragment : Fragment() {
             return
         }
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(requireContext(), getString(R.string.msg_grant_sms_first), Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), getString(R.string.msg_grant_sms_first), Toast.LENGTH_LONG).show()
             (activity as? MainActivity)?.checkPermissions()
             return
         }
@@ -251,28 +206,6 @@ class HomeFragment : Fragment() {
                     Snackbar.make(root, "Test failed ${config.name}: ${e.message}", Snackbar.LENGTH_LONG).show()
                 }
             }
-        }
-    }
-
-    inner class LogAdapter : RecyclerView.Adapter<LogAdapter.VH>() {
-        private var items: List<String> = emptyList()
-        fun update(newItems: List<String>) { items = newItems; notifyDataSetChanged() }
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-            val v = LayoutInflater.from(parent.context).inflate(R.layout.item_log, parent, false)
-            return VH(v)
-        }
-        override fun onBindViewHolder(holder: VH, position: Int) {
-            holder.tv.text = items[position]
-            // monochrome — white card, black dot 6dp, no pastel
-            holder.dot.setBackgroundResource(R.drawable.bg_timeline_dot_mono)
-            holder.card.setCardBackgroundColor(ContextCompat.getColor(holder.itemView.context, R.color.white))
-            // subtle divider via stroke already
-        }
-        override fun getItemCount(): Int = items.size
-        inner class VH(view: View) : RecyclerView.ViewHolder(view) {
-            val tv: TextView = view.findViewById(R.id.tvLog)
-            val dot: View = view.findViewById(R.id.dotTimeline)
-            val card: MaterialCardView = view.findViewById(R.id.cardLog)
         }
     }
 }

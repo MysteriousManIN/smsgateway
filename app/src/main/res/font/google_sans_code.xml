@@ -1,37 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <font-family xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <!-- ponytail: variable font Figtree reused for all weights via wght axis -->
+    <!-- Google Sans Code variable font for all weights via wght axis -->
     <font
-        android:font="@font/figtree_regular"
+        android:font="@font/google_sans_code_variable"
         android:fontStyle="normal"
         android:fontWeight="400"
-        app:font="@font/figtree_regular"
+        app:font="@font/google_sans_code_variable"
         app:fontStyle="normal"
         app:fontWeight="400"
         app:fontVariationSettings="'wght' 400" />
     <font
-        android:font="@font/figtree_medium"
+        android:font="@font/google_sans_code_variable"
         android:fontStyle="normal"
         android:fontWeight="500"
-        app:font="@font/figtree_medium"
+        app:font="@font/google_sans_code_variable"
         app:fontStyle="normal"
         app:fontWeight="500"
         app:fontVariationSettings="'wght' 500" />
     <font
-        android:font="@font/figtree_semibold"
+        android:font="@font/google_sans_code_variable"
         android:fontStyle="normal"
         android:fontWeight="600"
-        app:font="@font/figtree_semibold"
+        app:font="@font/google_sans_code_variable"
         app:fontStyle="normal"
         app:fontWeight="600"
         app:fontVariationSettings="'wght' 600" />
     <font
-        android:font="@font/figtree_bold"
+        android:font="@font/google_sans_code_variable"
         android:fontStyle="normal"
         android:fontWeight="700"
-        app:font="@font/figtree_bold"
+        app:font="@font/google_sans_code_variable"
         app:fontStyle="normal"
         app:fontWeight="700"
         app:fontVariationSettings="'wght' 700" />
+    <font
+        android:font="@font/google_sans_code_italic_variable"
+        android:fontStyle="italic"
+        android:fontWeight="400"
+        app:font="@font/google_sans_code_italic_variable"
+        app:fontStyle="italic"
+        app:fontWeight="400"
+        app:fontVariationSettings="'wght' 400" />
 </font-family>

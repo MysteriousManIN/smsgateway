@@ -40,7 +40,7 @@
             android:layout_height="wrap_content"
             android:textSize="12sp"
             android:textColor="@color/text_dark"
-            android:fontFamily="@font/figtree"
+            android:fontFamily="@font/google_sans_code"
             android:padding="12dp" />
     </com.google.android.material.card.MaterialCardView>
 
@@ -51,7 +51,7 @@
         android:text="now"
         android:textSize="9sp"
         android:textColor="@color/text_muted"
-        android:fontFamily="@font/figtree"
+        android:fontFamily="@font/google_sans_code"
         android:layout_marginStart="8dp"
         android:layout_gravity="center_vertical"
         android:visibility="gone" />

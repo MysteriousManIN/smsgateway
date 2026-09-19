@@ -90,11 +90,6 @@ class SettingsFragment : Fragment() {
 
         // also keep legacy btnBattery if exists (gone)
         view.findViewById<MaterialButton>(R.id.btnBattery)?.setOnClickListener { requestBatteryExemption() }
-        view.findViewById<MaterialButton>(R.id.btnClearLogs).setOnClickListener {
-            LogStore.clear()
-            LogStore.add("Logs cleared")
-            Toast.makeText(requireContext(), "Logs cleared", Toast.LENGTH_SHORT).show()
-        }
 
         refresh()
     }

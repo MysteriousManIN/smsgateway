@@ -19,7 +19,7 @@
             android:text="Settings"
             android:textSize="20sp"
             android:textColor="@color/text_dark"
-            android:fontFamily="@font/figtree"
+            android:fontFamily="@font/google_sans_code"
             android:textStyle="bold"
             android:layout_marginBottom="4dp" />
 
@@ -30,7 +30,7 @@
             android:textSize="11sp"
             android:letterSpacing="0.07"
             android:textColor="@color/text_muted"
-            android:fontFamily="@font/figtree"
+            android:fontFamily="@font/google_sans_code"
             android:layout_marginBottom="16dp" />
 
         <!-- Service controls — Switch Start/Stop, sharp 8dp -->
@@ -63,7 +63,7 @@
                         android:text="Service Controls"
                         android:textSize="14sp"
                         android:textColor="@color/text_dark"
-                        android:fontFamily="@font/figtree"
+                        android:fontFamily="@font/google_sans_code"
                         android:textStyle="bold" />
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
@@ -81,7 +81,7 @@
                     android:text="Start or stop foreground polling service"
                     android:textSize="12sp"
                     android:textColor="@color/text_muted"
-                    android:fontFamily="@font/figtree"
+                    android:fontFamily="@font/google_sans_code"
                     android:layout_marginTop="4dp" />
 
                 <!-- Legacy btnBattery keep hidden for compat if needed -->
@@ -128,7 +128,7 @@
                             android:text="Battery optimization"
                             android:textSize="14sp"
                             android:textColor="@color/text_dark"
-                            android:fontFamily="@font/figtree"
+                            android:fontFamily="@font/google_sans_code"
                             android:textStyle="bold" />
 
                         <TextView
@@ -138,7 +138,7 @@
                             android:text="Status: checking..."
                             android:textSize="12sp"
                             android:textColor="@color/text_muted"
-                            android:fontFamily="@font/figtree"
+                            android:fontFamily="@font/google_sans_code"
                             android:layout_marginTop="2dp" />
                     </LinearLayout>
 
@@ -176,7 +176,7 @@
                     android:text="Appearance"
                     android:textSize="14sp"
                     android:textColor="@color/text_dark"
-                    android:fontFamily="@font/figtree"
+                    android:fontFamily="@font/google_sans_code"
                     android:textStyle="bold" />
 
                 <TextView
@@ -185,7 +185,7 @@
                     android:text="Choose application theme"
                     android:textSize="12sp"
                     android:textColor="@color/text_muted"
-                    android:fontFamily="@font/figtree"
+                    android:fontFamily="@font/google_sans_code"
                     android:layout_marginTop="2dp"
                     android:layout_marginBottom="8dp" />
 
@@ -202,7 +202,7 @@
                         android:text="System default"
                         android:textSize="14sp"
                         android:textColor="@color/text_dark"
-                        android:fontFamily="@font/figtree"
+                        android:fontFamily="@font/google_sans_code"
                         app:buttonTint="@color/radio_button_tint"
                         app:useMaterialThemeColors="false"
                         android:paddingVertical="4dp" />
@@ -214,7 +214,7 @@
                         android:text="Light"
                         android:textSize="14sp"
                         android:textColor="@color/text_dark"
-                        android:fontFamily="@font/figtree"
+                        android:fontFamily="@font/google_sans_code"
                         app:buttonTint="@color/radio_button_tint"
                         app:useMaterialThemeColors="false"
                         android:paddingVertical="4dp" />
@@ -226,7 +226,7 @@
                         android:text="Dark"
                         android:textSize="14sp"
                         android:textColor="@color/text_dark"
-                        android:fontFamily="@font/figtree"
+                        android:fontFamily="@font/google_sans_code"
                         app:buttonTint="@color/radio_button_tint"
                         app:useMaterialThemeColors="false"
                         android:paddingVertical="4dp" />
@@ -257,7 +257,7 @@
                     android:text="Polling"
                     android:textSize="14sp"
                     android:textColor="@color/text_dark"
-                    android:fontFamily="@font/figtree"
+                    android:fontFamily="@font/google_sans_code"
                     android:textStyle="bold" />
 
                 <TextView
@@ -267,7 +267,7 @@
                     android:text="Polls enabled gateways every 15s"
                     android:textSize="12sp"
                     android:textColor="@color/text_muted"
-                    android:fontFamily="@font/figtree"
+                    android:fontFamily="@font/google_sans_code"
                     android:layout_marginTop="8dp"
                     android:background="@drawable/bg_mono_grey_6"
                     android:padding="12dp" />
@@ -279,7 +279,7 @@
                     android:text="Sent: 0 • Failed: 0"
                     android:textSize="12sp"
                     android:textColor="@color/text_muted"
-                    android:fontFamily="@font/figtree"
+                    android:fontFamily="@font/google_sans_code"
                     android:layout_marginTop="8dp"
                     android:visibility="gone" />
             </LinearLayout>
@@ -309,7 +309,7 @@
                     android:text="smsgateway"
                     android:textSize="14sp"
                     android:textColor="@color/text_dark"
-                    android:fontFamily="@font/figtree"
+                    android:fontFamily="@font/google_sans_code"
                     android:textStyle="bold" />
 
                 <TextView
@@ -318,21 +318,10 @@
                     android:text="v1.0.0"
                     android:textSize="14sp"
                     android:textColor="@color/text_muted"
-                    android:fontFamily="@font/figtree"
+                    android:fontFamily="@font/google_sans_code"
                     android:layout_marginTop="2dp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnClearLogs"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:text="Clear all logs"
-            android:textColor="@color/text_dark"
-            app:strokeColor="@color/border"
-            app:cornerRadius="6dp"
-            android:fontFamily="@font/figtree" />
 
     </LinearLayout>
 </ScrollView>

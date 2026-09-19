@@ -32,6 +32,7 @@ class MainActivity : AppCompatActivity() {
 
     private val homeFragment = HomeFragment()
     private val gatewaysFragment = GatewaysFragment()
+    private val logsFragment = LogsFragment()
     private val settingsFragment = SettingsFragment()
     private var currentTab = 0
 
@@ -66,7 +67,8 @@ class MainActivity : AppCompatActivity() {
         // drawer clicks
         findViewById<View>(R.id.drawerItemHome).setOnClickListener { switchTab(0); closeDrawer() }
         findViewById<View>(R.id.drawerItemGateway).setOnClickListener { switchTab(1); closeDrawer() }
-        findViewById<View>(R.id.drawerItemSettings).setOnClickListener { switchTab(2); closeDrawer() }
+        findViewById<View>(R.id.drawerItemLogs).setOnClickListener { switchTab(2); closeDrawer() }
+        findViewById<View>(R.id.drawerItemSettings).setOnClickListener { switchTab(3); closeDrawer() }
         findViewById<View>(R.id.btnHamburger).setOnClickListener { openDrawer() }
 
         // back press handles drawer
@@ -104,7 +106,8 @@ class MainActivity : AppCompatActivity() {
         val fragment: Fragment = when (index) {
             0 -> homeFragment
             1 -> gatewaysFragment
-            2 -> settingsFragment
+            2 -> logsFragment
+            3 -> settingsFragment
             else -> homeFragment
         }
         supportFragmentManager.beginTransaction()
@@ -117,12 +120,15 @@ class MainActivity : AppCompatActivity() {
     private fun updateDrawerSelection(index: Int) {
         val homeItem = findViewById<View>(R.id.drawerItemHome)
         val gwItem = findViewById<View>(R.id.drawerItemGateway)
+        val logsItem = findViewById<View>(R.id.drawerItemLogs)
         val setItem = findViewById<View>(R.id.drawerItemSettings)
         val homeIcon = findViewById<ImageView>(R.id.drawerIconHome)
         val gwIcon = findViewById<ImageView>(R.id.drawerIconGateway)
+        val logsIcon = findViewById<ImageView>(R.id.drawerIconLogs)
         val setIcon = findViewById<ImageView>(R.id.drawerIconSettings)
         val homeLabel = findViewById<TextView>(R.id.drawerLabelHome)
         val gwLabel = findViewById<TextView>(R.id.drawerLabelGateway)
+        val logsLabel = findViewById<TextView>(R.id.drawerLabelLogs)
         val setLabel = findViewById<TextView>(R.id.drawerLabelSettings)
 
         fun style(item: View, icon: ImageView, label: TextView, selected: Boolean) {
@@ -141,7 +147,8 @@ class MainActivity : AppCompatActivity() {
         }
         style(homeItem, homeIcon, homeLabel, index == 0)
         style(gwItem, gwIcon, gwLabel, index == 1)
-        style(setItem, setIcon, setLabel, index == 2)
+        style(logsItem, logsIcon, logsLabel, index == 2)
+        style(setItem, setIcon, setLabel, index == 3)
     }
 
     fun navigateToGateways() = switchTab(1)

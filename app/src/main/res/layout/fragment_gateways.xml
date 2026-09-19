@@ -32,7 +32,7 @@
                     android:text="Gateways"
                     android:textSize="20sp"
                     android:textColor="@color/text_dark"
-                    android:fontFamily="@font/figtree"
+                    android:fontFamily="@font/google_sans_code"
                     android:textStyle="bold" />
 
                 <TextView
@@ -42,7 +42,7 @@
                     android:textSize="11sp"
                     android:letterSpacing="0.07"
                     android:textColor="@color/text_muted"
-                    android:fontFamily="@font/figtree" />
+                    android:fontFamily="@font/google_sans_code" />
             </LinearLayout>
 
             <!-- Monochrome black sharp 6dp add button — single plus icon + text Add (fix double ++) -->
@@ -55,7 +55,7 @@
                 android:textColor="@color/white"
                 app:backgroundTint="@color/text_dark"
                 app:cornerRadius="6dp"
-                android:fontFamily="@font/figtree"
+                android:fontFamily="@font/google_sans_code"
                 android:textStyle="bold"
                 android:paddingHorizontal="16dp"
                 app:icon="@drawable/ic_add"
@@ -80,7 +80,7 @@
             android:layout_height="wrap_content"
             android:text="No gateways yet. Tap + Add to create."
             android:textColor="@color/text_muted"
-            android:fontFamily="@font/figtree"
+            android:fontFamily="@font/google_sans_code"
             android:gravity="center"
             android:padding="24dp"
             android:visibility="gone" />

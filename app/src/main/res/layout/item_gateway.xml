@@ -44,7 +44,7 @@
                 android:text="Default"
                 android:textSize="16sp"
                 android:textColor="@color/text_dark"
-                android:fontFamily="@font/figtree"
+                android:fontFamily="@font/google_sans_code"
                 android:textStyle="bold"
                 android:maxLines="1"
                 android:ellipsize="end" />
@@ -57,7 +57,7 @@
                 android:textSize="10sp"
                 android:letterSpacing="0.06"
                 android:textColor="@color/text_muted"
-                android:fontFamily="@font/figtree"
+                android:fontFamily="@font/google_sans_code"
                 android:background="@drawable/bg_chip_white_rounded16"
                 android:paddingHorizontal="8dp"
                 android:paddingVertical="4dp" />
@@ -70,7 +70,7 @@
             android:text="https://erp.example.com"
             android:textSize="12sp"
             android:textColor="@color/text_muted"
-            android:fontFamily="@font/figtree"
+            android:fontFamily="@font/google_sans_code"
             android:maxLines="1"
             android:ellipsize="middle"
             android:layout_marginTop="10dp" />
@@ -82,7 +82,7 @@
             android:text="tokn••••1234"
             android:textSize="11sp"
             android:textColor="#6B7280"
-            android:fontFamily="@font/figtree"
+            android:fontFamily="@font/google_sans_code"
             android:background="@drawable/bg_mono_grey_6"
             android:paddingHorizontal="8dp"
             android:paddingVertical="4dp"
@@ -103,7 +103,7 @@
                 android:text="Connection"
                 android:textSize="12sp"
                 android:textColor="@color/text_dark"
-                android:fontFamily="@font/figtree" />
+                android:fontFamily="@font/google_sans_code" />
 
             <com.google.android.material.switchmaterial.SwitchMaterial
                 android:id="@+id/switchEnabled"
@@ -130,7 +130,7 @@
                 android:textSize="11sp"
                 android:textColor="@color/white"
                 app:backgroundTint="@color/text_dark"
-                android:fontFamily="@font/figtree"
+                android:fontFamily="@font/google_sans_code"
                 app:cornerRadius="6dp" />
 
             <com.google.android.material.button.MaterialButton
@@ -144,7 +144,7 @@
                 android:textColor="@color/text_dark"
                 android:textSize="11sp"
                 app:strokeColor="@color/border"
-                android:fontFamily="@font/figtree"
+                android:fontFamily="@font/google_sans_code"
                 app:cornerRadius="6dp" />
         </LinearLayout>
 
@@ -158,7 +158,7 @@
             android:textSize="11sp"
             android:textColor="@color/text_muted"
             app:strokeColor="@color/border"
-            android:fontFamily="@font/figtree"
+            android:fontFamily="@font/google_sans_code"
             app:cornerRadius="6dp"
             android:layout_marginTop="8dp" />
     </LinearLayout>
