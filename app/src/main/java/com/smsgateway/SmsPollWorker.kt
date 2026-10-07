@@ -16,6 +16,10 @@ class SmsPollWorker(
 
     override suspend fun doWork(): Result {
         val prefs = Prefs.getInstance(ctx)
+        if (!prefs.isServiceEnabled()) {
+            Log.d("SmsGateway", "Worker: service switched OFF, skip")
+            return Result.success()
+        }
         val enabled = prefs.getEnabledBackends()
         if (enabled.isEmpty()) {
             Log.d("SmsGateway", "Worker: no enabled backends, skip")

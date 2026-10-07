@@ -15,6 +15,14 @@ class BootReceiver : BroadcastReceiver() {
             action == "android.intent.action.QUICKBOOT_POWERON"
         ) {
             val prefs = Prefs.getInstance(context)
+            if (!prefs.isServiceEnabled()) {
+                Log.d("SmsGateway", "Service was OFF — skip boot start")
+                // Clean any stale WorkManager fallback so Worker doesn't poll while OFF.
+                try {
+                    androidx.work.WorkManager.getInstance(context).cancelUniqueWork(SmsForegroundService.WORK_NAME)
+                } catch (_: Exception) {}
+                return
+            }
             if (prefs.isConfigured()) {
                 Log.d("SmsGateway", "Re-starting service after boot")
                 LogStore.add("Device reboot — restarting service")

@@ -57,6 +57,15 @@ class Prefs private constructor(context: Context) {
             }
         }
 
+    // --- service desired state (user toggle in Service Controls) ---
+    // Persists across reboot so BootReceiver / Worker don't auto-start when user left it OFF.
+    var serviceEnabled: Boolean
+        get() = prefs.getBoolean(KEY_SERVICE_ENABLED, false)
+        set(v) { prefs.edit().putBoolean(KEY_SERVICE_ENABLED, v).apply() }
+
+    fun isServiceEnabled(): Boolean = serviceEnabled
+    fun setServiceEnabled(enabled: Boolean) { serviceEnabled = enabled }
+
     // --- multi-backend ---
     fun getBackends(): List<BackendConfig> {
         // migrate if needed
@@ -186,6 +195,7 @@ class Prefs private constructor(context: Context) {
         private const val KEY_LAST_POLL = "last_poll"
         private const val KEY_BACKEND_CONFIGS = "backend_configs"
         private const val KEY_MIGRATED = "backend_migrated_v2"
+        private const val KEY_SERVICE_ENABLED = "service_enabled"
 
         @Volatile
         private var INSTANCE: Prefs? = null
