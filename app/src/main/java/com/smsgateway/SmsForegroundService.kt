@@ -34,14 +34,14 @@ class SmsForegroundService : Service() {
         if (intent?.action == ACTION_STOP) {
             Log.d(TAG, "Stop action received")
             // User tapped Stop in notification — persist OFF so reboot stays OFF.
-            try { Prefs.getInstance(this).setServiceEnabled(false) } catch (_: Exception) {}
+            try { Prefs.getInstance(this).serviceEnabled = false } catch (_: Exception) {}
             stopSelf()
             return START_NOT_STICKY
         }
 
         // Normal / boot start — persist ON so reboot restores it.
         // BootReceiver only calls this when flag is already ON, so this is idempotent.
-        try { Prefs.getInstance(this).setServiceEnabled(true) } catch (_: Exception) {}
+        try { Prefs.getInstance(this).serviceEnabled = true } catch (_: Exception) {}
 
         startForeground(NOTIF_ID, buildNotification("Starting…", 0, 0, 0))
 
@@ -222,7 +222,7 @@ class SmsForegroundService : Service() {
             private set
 
         fun start(context: Context) {
-            try { Prefs.getInstance(context).setServiceEnabled(true) } catch (_: Exception) {}
+            try { Prefs.getInstance(context).serviceEnabled = true } catch (_: Exception) {}
             val i = Intent(context, SmsForegroundService::class.java)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(i)
@@ -232,7 +232,7 @@ class SmsForegroundService : Service() {
         }
 
         fun stop(context: Context) {
-            try { Prefs.getInstance(context).setServiceEnabled(false) } catch (_: Exception) {}
+            try { Prefs.getInstance(context).serviceEnabled = false } catch (_: Exception) {}
             try {
                 WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
             } catch (_: Exception) {}

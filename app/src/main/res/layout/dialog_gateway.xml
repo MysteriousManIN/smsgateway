@@ -140,8 +140,8 @@
             android:layout_marginStart="8dp"
             android:text="Save"
             android:textColor="@color/white"
-            app:backgroundTint="@color/text_dark"
-            app:cornerRadius="8dp"
+            app:backgroundTint="@color/primary"
+            app:cornerRadius="12dp"
             android:fontFamily="@font/google_sans_code" />
     </LinearLayout>
 </LinearLayout>

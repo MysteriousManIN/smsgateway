@@ -45,7 +45,7 @@
                     android:fontFamily="@font/google_sans_code" />
             </LinearLayout>
 
-            <!-- Monochrome black sharp 6dp add button — single plus icon + text Add (fix double ++) -->
+            <!-- Colorful indigo Add button, soft 12dp -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/fabAdd"
                 android:layout_width="wrap_content"
@@ -53,8 +53,8 @@
                 android:text="Add"
                 android:textSize="13sp"
                 android:textColor="@color/white"
-                app:backgroundTint="@color/text_dark"
-                app:cornerRadius="6dp"
+                app:backgroundTint="@color/primary"
+                app:cornerRadius="12dp"
                 android:fontFamily="@font/google_sans_code"
                 android:textStyle="bold"
                 android:paddingHorizontal="16dp"

@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             android:text="@string/offline_banner"
             android:textColor="@color/white"
-            android:background="#D32F2F"
+            android:background="@color/offline_red"
             android:padding="8dp"
             android:visibility="gone"
             android:gravity="center"

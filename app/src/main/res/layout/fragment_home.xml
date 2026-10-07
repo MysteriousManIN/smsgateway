@@ -13,29 +13,7 @@
         android:paddingTop="16dp"
         android:paddingBottom="24dp">
 
-        <!-- Header: app name only, no avatar -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="smsgateway"
-            android:textSize="20sp"
-            android:textColor="@color/text_dark"
-            android:fontFamily="@font/google_sans_code"
-            android:textStyle="bold"
-            android:letterSpacing="0.02" />
-
-        <TextView
-            android:id="@+id/tvGreeting"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Hello, Good Morning!"
-            android:textSize="16sp"
-            android:textColor="@color/text_muted"
-            android:fontFamily="@font/google_sans_code"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="20dp" />
-
-        <!-- 2x2 Grid counters — sharp 8dp white cards, no icons -->
+        <!-- 2x2 Grid counters — colorful pastel cards -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -46,11 +24,11 @@
                 android:layout_height="110dp"
                 android:layout_weight="1"
                 android:layout_marginEnd="8dp"
-                app:cardCornerRadius="8dp"
+                app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/border"
-                app:cardBackgroundColor="@color/white">
+                app:cardBackgroundColor="@color/statSentBg">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -65,7 +43,7 @@
                         android:text="TOTAL SENT"
                         android:textSize="11sp"
                         android:letterSpacing="0.08"
-                        android:textColor="@color/text_muted"
+                        android:textColor="@color/statSentFg"
                         android:fontFamily="@font/google_sans_code" />
 
                     <TextView
@@ -74,7 +52,7 @@
                         android:layout_height="wrap_content"
                         android:text="0"
                         android:textSize="28sp"
-                        android:textColor="@color/text_dark"
+                        android:textColor="@color/statSentFg"
                         android:fontFamily="@font/google_sans_code"
                         android:textStyle="bold"
                         android:layout_marginTop="8dp" />
@@ -96,11 +74,11 @@
                 android:layout_height="110dp"
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
-                app:cardCornerRadius="8dp"
+                app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/border"
-                app:cardBackgroundColor="@color/white">
+                app:cardBackgroundColor="@color/statPendingBg">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -114,7 +92,7 @@
                         android:text="PENDING"
                         android:textSize="11sp"
                         android:letterSpacing="0.08"
-                        android:textColor="@color/text_muted"
+                        android:textColor="@color/statPendingFg"
                         android:fontFamily="@font/google_sans_code" />
 
                     <TextView
@@ -123,7 +101,7 @@
                         android:layout_height="wrap_content"
                         android:text="—"
                         android:textSize="28sp"
-                        android:textColor="@color/text_dark"
+                        android:textColor="@color/statPendingFg"
                         android:fontFamily="@font/google_sans_code"
                         android:textStyle="bold"
                         android:layout_marginTop="8dp" />
@@ -152,11 +130,11 @@
                 android:layout_height="110dp"
                 android:layout_weight="1"
                 android:layout_marginEnd="8dp"
-                app:cardCornerRadius="8dp"
+                app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/border"
-                app:cardBackgroundColor="@color/white">
+                app:cardBackgroundColor="@color/statGatewaysBg">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -170,7 +148,7 @@
                         android:text="GATEWAYS"
                         android:textSize="11sp"
                         android:letterSpacing="0.08"
-                        android:textColor="@color/text_muted"
+                        android:textColor="@color/statGatewaysFg"
                         android:fontFamily="@font/google_sans_code" />
 
                     <TextView
@@ -179,7 +157,7 @@
                         android:layout_height="wrap_content"
                         android:text="0"
                         android:textSize="28sp"
-                        android:textColor="@color/text_dark"
+                        android:textColor="@color/statGatewaysFg"
                         android:fontFamily="@font/google_sans_code"
                         android:textStyle="bold"
                         android:layout_marginTop="8dp" />
@@ -200,11 +178,11 @@
                 android:layout_height="110dp"
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
-                app:cardCornerRadius="8dp"
+                app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/border"
-                app:cardBackgroundColor="@color/white">
+                app:cardBackgroundColor="@color/statFailedBg">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -218,7 +196,7 @@
                         android:text="FAILED"
                         android:textSize="11sp"
                         android:letterSpacing="0.08"
-                        android:textColor="@color/text_muted"
+                        android:textColor="@color/statFailedFg"
                         android:fontFamily="@font/google_sans_code" />
 
                     <TextView
@@ -227,7 +205,7 @@
                         android:layout_height="wrap_content"
                         android:text="0"
                         android:textSize="28sp"
-                        android:textColor="@color/text_dark"
+                        android:textColor="@color/statFailedFg"
                         android:fontFamily="@font/google_sans_code"
                         android:textStyle="bold"
                         android:layout_marginTop="8dp" />

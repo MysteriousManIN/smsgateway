@@ -64,7 +64,6 @@ class Prefs private constructor(context: Context) {
         set(v) { prefs.edit().putBoolean(KEY_SERVICE_ENABLED, v).apply() }
 
     fun isServiceEnabled(): Boolean = serviceEnabled
-    fun setServiceEnabled(enabled: Boolean) { serviceEnabled = enabled }
 
     // --- multi-backend ---
     fun getBackends(): List<BackendConfig> {

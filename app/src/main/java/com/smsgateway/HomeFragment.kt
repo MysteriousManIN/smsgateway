@@ -14,7 +14,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.Calendar
 
 class HomeFragment : Fragment() {
 
@@ -23,7 +22,6 @@ class HomeFragment : Fragment() {
     private lateinit var tvSent: TextView
     private lateinit var tvFailed: TextView
     private lateinit var tvGatewaysCount: TextView
-    private lateinit var tvGreeting: TextView
 
     // legacy hidden refs kept for compat
     private var tvServiceStatus: TextView? = null
@@ -55,7 +53,6 @@ class HomeFragment : Fragment() {
         tvSent = view.findViewById(R.id.tvSent)
         tvFailed = view.findViewById(R.id.tvFailed)
         tvGatewaysCount = view.findViewById(R.id.tvGatewaysCount)
-        tvGreeting = view.findViewById(R.id.tvGreeting)
 
         // legacy views
         tvServiceStatus = view.findViewById(R.id.tvServiceStatus)
@@ -73,7 +70,6 @@ class HomeFragment : Fragment() {
         view.findViewById<View>(R.id.btnBattery)?.setOnClickListener { (activity as? MainActivity)?.requestBatteryExemption() }
         view.findViewById<View>(R.id.btnTestSend)?.setOnClickListener { doTestSend(view) }
 
-        updateGreeting()
         refreshStats()
         setupSpinner()
     }
@@ -83,23 +79,11 @@ class HomeFragment : Fragment() {
         handler.post(refreshRunnable)
         refreshStats()
         setupSpinner()
-        updateGreeting()
     }
 
     override fun onPause() {
         super.onPause()
         handler.removeCallbacks(refreshRunnable)
-    }
-
-    private fun updateGreeting() {
-        val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-        val suffix = when (hour) {
-            in 0..11 -> "Good Morning!"
-            in 12..16 -> "Good Afternoon!"
-            in 17..20 -> "Good Evening!"
-            else -> "Good Night!"
-        }
-        tvGreeting.text = "Hello, $suffix"
     }
 
     private fun refreshStats() {

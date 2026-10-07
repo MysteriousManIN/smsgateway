@@ -1,75 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Monochrome sharp minimal — white/black/grey only, no pastels -->
-    <color name="bg_light">#FFFAFAFA</color>
+    <!-- Colorful minimal modern — soft slate bg, indigo primary, fresh status accents -->
+    <color name="bg_light">#FFF4F6FB</color>
     <color name="bg_surface">#FFFFFFFF</color>
     <color name="bg_search">#FFFFFFFF</color>
-    <color name="border">#FFE9ECEF</color>
-    <color name="border_light">#FFF1F3F5</color>
-    <color name="code_bg">#FFF5F5F5</color>
-    <color name="grey_bg">#FFF5F5F5</color>
-    <color name="text_dark">#FF111111</color>
-    <color name="text_primary">#FF111111</color>
-    <color name="text_muted">#FF6B7280</color>
-    <color name="text_secondary">#FF6C757D</color>
-    <color name="text_hint">#FFADB5BD</color>
-    <color name="primary">#FF111111</color>
-    <color name="primaryBlue">#FF111111</color>
-    <color name="primary_accent">#FF111111</color>
+    <color name="border">#FFE5E9F2</color>
+    <color name="border_light">#FFEDF1F7</color>
+    <color name="code_bg">#FFF1F5F9</color>
+    <color name="grey_bg">#FFF1F5F9</color>
+    <color name="text_dark">#FF0F172A</color>
+    <color name="text_primary">#FF0F172A</color>
+    <color name="text_muted">#FF64748B</color>
+    <color name="text_secondary">#FF64748B</color>
+    <color name="text_hint">#FF94A3B8</color>
+    <color name="primary">#FF4F46E5</color>
+    <color name="primaryBlue">#FF4F46E5</color>
+    <color name="primary_accent">#FF7C3AED</color>
     <color name="white">#FFFFFFFF</color>
     <color name="black">#FF000000</color>
-    <color name="offline_red">#FF6B7280</color>
-    <color name="success_green">#FF111111</color>
-    <color name="dot_online">#FF111111</color>
-    <color name="dot_offline">#FF9CA3AF</color>
-    <color name="dot_idle">#FFD1D5DB</color>
+    <color name="offline_red">#FFF43F5E</color>
+    <color name="success_green">#FF10B981</color>
+    <color name="dot_online">#FF10B981</color>
+    <color name="dot_offline">#FFCBD5E1</color>
+    <color name="dot_idle">#FFF59E0B</color>
 
-    <!-- Template colorful accents — mapped to monochrome greys for compat -->
-    <color name="accentRed">#FF111111</color>
-    <color name="accentRedBright">#FF111111</color>
-    <color name="accentRedBg">#FFF5F5F5</color>
-    <color name="accentRedLight">#FFFAFAFA</color>
-    <color name="accentYellow">#FF9CA3AF</color>
-    <color name="accentYellowBg">#FFF5F5F5</color>
-    <color name="accentYellowDeep">#FF6B7280</color>
-    <color name="accentMint">#FF111111</color>
-    <color name="accentMintBg">#FFF5F5F5</color>
-    <color name="accentMintLight">#FFFAFAFA</color>
-    <color name="accentLavender">#FFF5F5F5</color>
-    <color name="accentPeach">#FFFAFAFA</color>
-    <color name="accentCream">#FFFAFAFA</color>
-    <color name="accentBlue">#FF111111</color>
-    <color name="accentBlueLight">#FF111111</color>
-    <color name="avatarYellow">#FFF5F5F5</color>
+    <!-- Status accents -->
+    <color name="accentRed">#FFF43F5E</color>
+    <color name="accentRedBright">#FFE11D48</color>
+    <color name="accentRedBg">#FFFFF1F2</color>
+    <color name="accentRedLight">#FFFFE4E6</color>
+    <color name="accentYellow">#FFF59E0B</color>
+    <color name="accentYellowBg">#FFFFFBEB</color>
+    <color name="accentYellowDeep">#FFB45309</color>
+    <color name="accentMint">#FF10B981</color>
+    <color name="accentMintBg">#FFECFDF5</color>
+    <color name="accentMintLight">#FFD1FAE5</color>
+    <color name="accentLavender">#FFEDE9FE</color>
+    <color name="accentPeach">#FFFFEDD5</color>
+    <color name="accentCream">#FFFFF7ED</color>
+    <color name="accentBlue">#FF4F46E5</color>
+    <color name="accentBlueLight">#FFEEF2FF</color>
+    <color name="avatarYellow">#FFFEF3C7</color>
 
-    <!-- Legacy pastel names kept for compatibility — mapped to monochrome -->
-    <color name="blue_bg">#FFFAFAFA</color>
-    <color name="blue_bg_soft">#FFF5F5F5</color>
-    <color name="blue_bg_light">#FFFFFFFF</color>
-    <color name="lavender">#FFF5F5F5</color>
-    <color name="lavender_dark">#FFE9ECEF</color>
-    <color name="sky">#FFF5F5F5</color>
-    <color name="sky_dark">#FFE9ECEF</color>
-    <color name="yellow">#FFF5F5F5</color>
-    <color name="yellow_dark">#FFE9ECEF</color>
-    <color name="peach">#FFFAFAFA</color>
-    <color name="peach_dark">#FFE9ECEF</color>
-    <color name="dark_nav">#FF111111</color>
-    <color name="dark_nav_light">#FF212529</color>
-    <color name="purple_200">#FFADB5BD</color>
-    <color name="purple_500">#FF111111</color>
-    <color name="purple_700">#FF111111</color>
-    <color name="teal_200">#FFADB5BD</color>
-    <color name="teal_700">#FF495057</color>
-    <color name="card_stroke">#FFE9ECEF</color>
+    <!-- Stat card tints -->
+    <color name="statSentBg">#FFECFDF5</color>
+    <color name="statSentFg">#FF047857</color>
+    <color name="statPendingBg">#FFFFFBEB</color>
+    <color name="statPendingFg">#FFB45309</color>
+    <color name="statGatewaysBg">#FFEEF2FF</color>
+    <color name="statGatewaysFg">#FF4F46E5</color>
+    <color name="statFailedBg">#FFFFF1F2</color>
+    <color name="statFailedFg">#FFE11D48</color>
+
+    <!-- Legacy names — now colorful -->
+    <color name="blue_bg">#FFEEF2FF</color>
+    <color name="blue_bg_soft">#FFE0E7FF</color>
+    <color name="blue_bg_light">#FFF5F3FF</color>
+    <color name="lavender">#FFEDE9FE</color>
+    <color name="lavender_dark">#FFDDD6FE</color>
+    <color name="sky">#FFE0F2FE</color>
+    <color name="sky_dark">#FFBAE6FD</color>
+    <color name="yellow">#FFFEF3C7</color>
+    <color name="yellow_dark">#FFFDE68A</color>
+    <color name="peach">#FFFFEDD5</color>
+    <color name="peach_dark">#FFFDBA74</color>
+    <color name="dark_nav">#FF0F172A</color>
+    <color name="dark_nav_light">#FF1E293B</color>
+    <color name="purple_200">#FFC4B5FD</color>
+    <color name="purple_500">#FF8B5CF6</color>
+    <color name="purple_700">#FF6D28D9</color>
+    <color name="teal_200">#FF5EEAD4</color>
+    <color name="teal_700">#FF0F766E</color>
+    <color name="card_stroke">#FFE5E9F2</color>
     <color name="chip_bg">#FFFFFFFF</color>
 
-    <!-- Monochrome explicit -->
-    <color name="mono_border">#FFE9ECEF</color>
+    <!-- Compat aliases (previously monochrome) -->
+    <color name="mono_border">#FFE5E9F2</color>
     <color name="mono_card">#FFFFFFFF</color>
-    <color name="mono_text">#FF111111</color>
-    <color name="mono_bg">#FFFAFAFA</color>
-    <color name="mono_muted">#FF6B7280</color>
-    <color name="mono_black">#FF111111</color>
-    <color name="mono_grey_bg">#FFF5F5F5</color>
+    <color name="mono_text">#FF0F172A</color>
+    <color name="mono_bg">#FFF4F6FB</color>
+    <color name="mono_muted">#FF64748B</color>
+    <color name="mono_black">#FF4F46E5</color>
+    <color name="mono_grey_bg">#FFF1F5F9</color>
 </resources>
