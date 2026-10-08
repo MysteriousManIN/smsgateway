@@ -81,7 +81,7 @@
                     android:textSize="13sp"
                     android:textColor="@color/text_muted"
                     android:fontFamily="@font/dm_sans"
-                    android:layout_marginTop="4dp" />
+                    android:layout_marginTop="0dp" />
 
                 <!-- Legacy btnBattery keep hidden for compat if needed -->
                 <com.google.android.material.button.MaterialButton

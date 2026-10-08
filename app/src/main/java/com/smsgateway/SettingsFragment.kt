@@ -220,7 +220,7 @@ class SettingsFragment : Fragment() {
             val start = length
             append(subtitle)
             setSpan(
-                android.text.style.AbsoluteSizeSpan((11 * density + 0.5f).toInt(), true),
+                android.text.style.AbsoluteSizeSpan(11, true),
                 start, length,
                 android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
             )
