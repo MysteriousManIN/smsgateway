@@ -22,6 +22,27 @@ object SmsSender {
     private const val ACTION_SENT = "com.smsgateway.SMS_SENT"
     private const val ACTION_DELIVERED = "com.smsgateway.SMS_DELIVERED"
 
+    /**
+     * Uses the user-selected SIM (Settings) if set, else the system default SMS SIM.
+     * Falls back to default if the SIM was removed or the id is invalid.
+     */
+    private fun pickSmsManager(context: Context): SmsManager {
+        val subId = try { Prefs.getInstance(context).simSubscriptionId } catch (_: Exception) { -1 }
+        if (subId >= 0) {
+            try {
+                return SmsManager.getSmsManagerForSubscriptionId(subId)
+            } catch (_: Exception) {
+                Log.w(TAG, "Selected SIM subId=$subId unavailable — using default")
+            }
+        }
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            context.getSystemService(SmsManager::class.java) ?: SmsManager.getDefault()
+        } else {
+            @Suppress("DEPRECATION")
+            SmsManager.getDefault()
+        }
+    }
+
     fun send(context: Context, msg: SmsMessage, config: BackendConfig? = null) {
         val appContext = context.applicationContext
         // resolve api for status callbacks: if config provided use that, else fallback to first backend / legacy
@@ -37,12 +58,7 @@ object SmsSender {
         } catch (_: Exception) { null }
 
         try {
-            val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                appContext.getSystemService(SmsManager::class.java)
-            } else {
-                @Suppress("DEPRECATION")
-                SmsManager.getDefault()
-            }
+            val smsManager = pickSmsManager(appContext)
 
             val sentIntent = PendingIntent.getBroadcast(
                 appContext,

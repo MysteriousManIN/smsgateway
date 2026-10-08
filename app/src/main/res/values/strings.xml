@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">smsgateway</string>
+    <string name="app_name">Sandesh</string>
     <string name="hint_backend_url">Backend URL (https://erp.example.com)</string>
     <string name="hint_gateway_token">Gateway Token</string>
     <string name="btn_save">Save</string>
@@ -23,9 +23,9 @@
     <string name="msg_enter_url_token">Enter Backend URL and Token first</string>
     <string name="msg_test_enqueued">Test SMS enqueued via backend</string>
     <string name="msg_test_failed">Test send failed: %s</string>
-    <string name="channel_name">smsgateway</string>
-    <string name="channel_desc">Shows smsgateway polling status</string>
-    <string name="notif_title">smsgateway active</string>
+    <string name="channel_name">Sandesh</string>
+    <string name="channel_desc">Shows Sandesh polling status</string>
+    <string name="notif_title">Sandesh active</string>
     <string name="notif_stop">Stop</string>
     <string name="battery_title">Battery Optimization</string>
     <string name="battery_msg">Allow ignoring battery optimizations so polling survives Doze? This keeps SMS delivery reliable.</string>

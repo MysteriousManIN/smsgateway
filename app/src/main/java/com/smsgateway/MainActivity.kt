@@ -1,14 +1,17 @@
 package com.smsgateway
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
+import android.provider.Settings
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -133,13 +136,10 @@ class MainActivity : AppCompatActivity() {
 
         fun style(item: View, icon: ImageView, label: TextView, selected: Boolean) {
             if (selected) {
-                item.setBackgroundResource(R.drawable.bg_drawer_selected_6)
                 icon.setColorFilter(ContextCompat.getColor(this, R.color.text_dark))
                 label.setTextColor(ContextCompat.getColor(this, R.color.text_dark))
                 label.setTypeface(null, android.graphics.Typeface.BOLD)
             } else {
-                item.setBackgroundResource(0)
-                item.setBackgroundColor(ContextCompat.getColor(this, android.R.color.transparent))
                 icon.setColorFilter(ContextCompat.getColor(this, R.color.text_muted))
                 label.setTextColor(ContextCompat.getColor(this, R.color.text_muted))
                 label.setTypeface(null, android.graphics.Typeface.NORMAL)
@@ -155,9 +155,30 @@ class MainActivity : AppCompatActivity() {
 
     fun checkPermissions() {
         val needed = mutableListOf<String>()
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) needed.add(Manifest.permission.SEND_SMS)
+        val smsMissing = ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED
+        if (smsMissing) needed.add(Manifest.permission.SEND_SMS)
         if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) needed.add(Manifest.permission.POST_NOTIFICATIONS)
         if (needed.isEmpty()) return
+        // SMS permanently denied (asked before, no rationale left) → route to App Settings
+        if (smsMissing && prefs.permSmsAsked && !shouldShowRequestPermissionRationale(Manifest.permission.SEND_SMS)) {
+            AlertDialog.Builder(this)
+                .setTitle("SMS permission required")
+                .setMessage("SMS access is denied. Without it no message can be sent. Open app settings to allow it.")
+                .setPositiveButton("Open Settings") { _, _ ->
+                    try {
+                        startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.parse("package:$packageName")
+                        })
+                    } catch (_: Exception) {
+                        Toast.makeText(this, "Open Settings > Apps > Sandesh > Permissions", Toast.LENGTH_LONG).show()
+                    }
+                }
+                .setNegativeButton("Later", null)
+                .setCancelable(false)
+                .show()
+            return
+        }
+        prefs.permSmsAsked = true
         val showRationale = needed.any { shouldShowRequestPermissionRationale(it) }
         if (showRationale) {
             AlertDialog.Builder(this)

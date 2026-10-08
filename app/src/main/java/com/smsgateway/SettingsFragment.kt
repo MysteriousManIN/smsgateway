@@ -1,30 +1,54 @@
 package com.smsgateway
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.telephony.SubscriptionInfo
+import android.telephony.SubscriptionManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.radiobutton.MaterialRadioButton
 import com.google.android.material.switchmaterial.SwitchMaterial
 
 class SettingsFragment : Fragment() {
 
+    companion object {
+        private const val ACTION_GRANT_PHONE = -2
+    }
+
     private lateinit var prefs: Prefs
     private lateinit var tvBatteryStatus: TextView
     private lateinit var tvPollingInfo: TextView
     private lateinit var switchService: SwitchMaterial
     private lateinit var switchBattery: SwitchMaterial
+    private lateinit var tvSimInfo: TextView
+    private lateinit var simContainer: LinearLayout
+
+    private val requestPhoneLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            renderSimSection()
+        } else {
+            tvSimInfo.text = "Phone permission denied — system default SIM will be used"
+            simContainer.removeAllViews()
+        }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return inflater.inflate(R.layout.fragment_settings, container, false)
@@ -36,6 +60,8 @@ class SettingsFragment : Fragment() {
         tvPollingInfo = view.findViewById(R.id.tvPollingInfo)
         switchService = view.findViewById(R.id.switchService)
         switchBattery = view.findViewById(R.id.switchBattery)
+        tvSimInfo = view.findViewById(R.id.tvSimInfo)
+        simContainer = view.findViewById(R.id.simContainer)
 
         // Service toggle
         switchService.isChecked = SmsForegroundService.isRunning
@@ -91,11 +117,13 @@ class SettingsFragment : Fragment() {
         // also keep legacy btnBattery if exists (gone)
         view.findViewById<MaterialButton>(R.id.btnBattery)?.setOnClickListener { requestBatteryExemption() }
 
+        renderSimSection()
         refresh()
     }
 
     override fun onResume() {
         super.onResume()
+        renderSimSection()
         refresh()
     }
 
@@ -133,8 +161,119 @@ class SettingsFragment : Fragment() {
         view?.findViewById<TextView>(R.id.tvStatsSummary)?.text = "Sent: ${prefs.sentCount} • Failed: ${prefs.failedCount} • Gateways: $enabled/${prefs.getBackends().size} active"
     }
 
-    private fun toggleService(enable: Boolean) {
-        if (enable) {
+    // ---------- SIM selection ----------
+
+    private fun renderSimSection() {
+        if (!::simContainer.isInitialized) return
+        simContainer.removeAllViews()
+        if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+            tvSimInfo.text = "Phone access needed to list SIMs"
+            addSimRow("Allow phone access", "Tap to grant permission", ACTION_GRANT_PHONE, false)
+            return
+        }
+        val sm = requireContext().getSystemService(SubscriptionManager::class.java)
+        val subs = try {
+            sm?.activeSubscriptionInfoList ?: emptyList()
+        } catch (_: SecurityException) {
+            emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
+        val selected = prefs.simSubscriptionId
+        if (subs.isEmpty()) {
+            tvSimInfo.text = "No active SIMs found — system default will be used"
+            return
+        }
+        tvSimInfo.text = if (subs.size == 1) "1 SIM found — tap to select" else "${subs.size} SIMs found — tap to select"
+        addSimRow("System default", "Let Android choose the SMS SIM", -1, selected == -1)
+        for (s in subs) {
+            val (title, subtitle) = simLabel(s)
+            addSimRow(title, subtitle, s.subscriptionId, selected == s.subscriptionId)
+        }
+    }
+
+    private fun simLabel(s: SubscriptionInfo): Pair<String, String> {
+        val title = s.carrierName?.toString()?.ifBlank { null }
+            ?: s.displayName?.toString()?.ifBlank { null }
+            ?: "SIM ${s.simSlotIndex + 1}"
+        var subtitle = "Slot ${s.simSlotIndex + 1}"
+        try {
+            val number = s.number?.trim()
+            if (!number.isNullOrBlank()) subtitle += " • $number"
+        } catch (_: SecurityException) {
+            // number hidden without extra permission — slot info is enough
+        } catch (_: Exception) {}
+        return title to subtitle
+    }
+
+    private fun addSimRow(title: String, subtitle: String, id: Int, checked: Boolean) {
+        val ctx = requireContext()
+        val density = ctx.resources.displayMetrics.density
+        val muted = ContextCompat.getColor(ctx, R.color.text_muted)
+        val label = android.text.SpannableStringBuilder(title).apply {
+            setSpan(
+                android.text.style.StyleSpan(android.graphics.Typeface.BOLD),
+                0, title.length,
+                android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+            append("\n")
+            val start = length
+            append(subtitle)
+            setSpan(
+                android.text.style.AbsoluteSizeSpan((11 * density + 0.5f).toInt(), true),
+                start, length,
+                android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+            setSpan(
+                android.text.style.ForegroundColorSpan(muted),
+                start, length,
+                android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+        val rb = com.google.android.material.radiobutton.MaterialRadioButton(ctx).apply {
+            text = label
+            isChecked = checked
+            setPadding(0, (6 * density + 0.5f).toInt(), 0, (6 * density + 0.5f).toInt())
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            try {
+                buttonTintList = ContextCompat.getColorStateList(ctx, R.color.radio_button_tint)
+            } catch (_: Exception) {}
+        }
+        rb.setOnClickListener {
+            if (id == ACTION_GRANT_PHONE) {
+                // Launcher is only valid while the fragment is started; guard against
+                // taps during fragment transitions (would crash with IllegalStateException).
+                if (isAdded && lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+                    try {
+                        requestPhoneLauncher.launch(android.Manifest.permission.READ_PHONE_STATE)
+                    } catch (_: IllegalStateException) {
+                        openPhoneAppSettings()
+                    }
+                }
+            } else {
+                prefs.simSubscriptionId = id
+                prefs.simDisplayName = if (id == -1) null else title
+                LogStore.add(if (id == -1) "SIM: system default selected" else "SIM selected: $title")
+                renderSimSection()
+            }
+        }
+        simContainer.addView(rb)
+    }
+
+    private fun openPhoneAppSettings() {
+        try {
+            startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = android.net.Uri.parse("package:${requireContext().packageName}")
+            })
+        } catch (_: Exception) {
+            android.widget.Toast.makeText(requireContext(), "Open Settings > Apps > Sandesh > Permissions", android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun toggleService(enable: Boolean) {        if (enable) {
             if (!prefs.isConfigured()) {
                 Toast.makeText(requireContext(), "Add & enable a gateway first", Toast.LENGTH_SHORT).show()
                 switchService.isChecked = false

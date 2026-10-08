@@ -12,10 +12,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Add Gateway"
-        android:textSize="18sp"
+        android:textSize="28sp"
         android:textColor="@color/text_dark"
-        android:fontFamily="@font/google_sans_code"
-        android:textStyle="bold"
+        android:fontFamily="@font/italiana_regular"
+        android:layout_marginBottom="4dp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/border"
         android:layout_marginBottom="16dp" />
 
     <com.google.android.material.textfield.TextInputLayout
@@ -33,17 +38,18 @@
             android:layout_height="wrap_content"
             android:singleLine="true"
             android:inputType="textCapWords"
-            android:fontFamily="@font/google_sans_code"
+            android:fontFamily="@font/dm_sans"
             android:textSize="14sp" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Base URL (https://...)"
+        android:hint="Base URL"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         app:boxStrokeColor="@color/border"
         app:hintTextColor="@color/text_muted"
+        app:placeholderText="https://erp1.example.com"
         android:layout_marginBottom="8dp">
 
         <com.google.android.material.textfield.TextInputEditText
@@ -52,8 +58,7 @@
             android:layout_height="wrap_content"
             android:singleLine="true"
             android:inputType="textUri"
-            android:hint="https://erp1.example.com"
-            android:fontFamily="@font/google_sans_code"
+            android:fontFamily="@font/dm_sans"
             android:textSize="14sp" />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -73,7 +78,7 @@
             android:layout_height="wrap_content"
             android:singleLine="true"
             android:inputType="textPassword"
-            android:fontFamily="@font/google_sans_code"
+            android:fontFamily="@font/dm_sans"
             android:textSize="14sp" />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -90,7 +95,7 @@
             android:text="Enabled"
             android:textSize="14sp"
             android:textColor="@color/text_dark"
-            android:fontFamily="@font/google_sans_code"
+            android:fontFamily="@font/dm_sans"
             android:layout_weight="1" />
 
         <com.google.android.material.switchmaterial.SwitchMaterial
@@ -111,8 +116,8 @@
         android:text="Test Connection"
         android:textColor="@color/text_dark"
         app:strokeColor="@color/border"
-        app:cornerRadius="8dp"
-        android:fontFamily="@font/google_sans_code"
+        app:cornerRadius="0dp"
+        android:fontFamily="@font/dm_sans"
         android:layout_marginBottom="12dp" />
 
     <LinearLayout
@@ -129,8 +134,8 @@
             android:text="Cancel"
             android:textColor="@color/text_dark"
             app:strokeColor="@color/border"
-            app:cornerRadius="8dp"
-            android:fontFamily="@font/google_sans_code" />
+            app:cornerRadius="0dp"
+            android:fontFamily="@font/dm_sans" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSave"
@@ -140,8 +145,8 @@
             android:layout_marginStart="8dp"
             android:text="Save"
             android:textColor="@color/white"
-            app:backgroundTint="@color/primary"
-            app:cornerRadius="12dp"
-            android:fontFamily="@font/google_sans_code" />
+            app:backgroundTint="@color/text_dark"
+            app:cornerRadius="0dp"
+            android:fontFamily="@font/dm_sans" />
     </LinearLayout>
 </LinearLayout>

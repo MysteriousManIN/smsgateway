@@ -1,6 +1,8 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
-  <path android:fillColor="#FF111111" android:pathData="M4,6h16v2H4V6zM4,11h16v2H4V11zM4,16h16v2H4V16zM3,4c-0.55,0 -1,0.45 -1,1v14c0,0.55 0.45,1 1,1h18c0.55,0 1,-0.45 1,-1V5c0,-0.55 -0.45,-1 -1,-1H3zM3,5h18v14H3V5z"/>
-  <circle android:fillColor="#FF111111" cx="6.5" cy="7" r="1"/>
-  <circle android:fillColor="#FF111111" cx="6.5" cy="12" r="1"/>
-  <circle android:fillColor="#FF111111" cx="6.5" cy="17" r="1"/>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path android:fillColor="#00000000" android:pathData="M0 0h24v24H0V0zm0 0h24v24H0V0z" />
+    <path android:fillColor="#FF000000" android:pathData="M16 4.2c1.5 0 3 .6 4.2 1.7l.8-.8C19.6 3.7 17.8 3 16 3s-3.6.7-5 2.1l.8.8C13 4.8 14.5 4.2 16 4.2zm-3.3 2.5l.8.8c.7-.7 1.6-1 2.5-1s1.8.3 2.5 1l.8-.8c-.9-.9-2.1-1.4-3.3-1.4s-2.4.5-3.3 1.4zM19 13h-2V9h-2v4H5c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-4c0-1.1-.9-2-2-2zm0 6H5v-4h14v4zM6 16h2v2H6zm3.5 0h2v2h-2zm3.5 0h2v2h-2z" />
 </vector>

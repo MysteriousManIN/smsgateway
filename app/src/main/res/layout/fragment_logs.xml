@@ -27,10 +27,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Logs"
-                android:textSize="20sp"
+                android:textSize="34sp"
                 android:textColor="@color/text_dark"
-                android:fontFamily="@font/google_sans_code"
-                android:textStyle="bold" />
+                android:fontFamily="@font/italiana_regular" />
 
             <TextView
                 android:id="@+id/tvLogsCount"
@@ -38,9 +37,9 @@
                 android:layout_height="wrap_content"
                 android:text="SYSTEM &amp; GATEWAY ACTIVITY"
                 android:textSize="11sp"
-                android:letterSpacing="0.07"
+                android:letterSpacing="0.14"
                 android:textColor="@color/text_muted"
-                android:fontFamily="@font/google_sans_code" />
+                android:fontFamily="@font/dm_sans" />
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
@@ -52,8 +51,8 @@
             android:textSize="13sp"
             android:textColor="@color/text_dark"
             app:strokeColor="@color/border"
-            app:cornerRadius="6dp"
-            android:fontFamily="@font/google_sans_code"
+            app:cornerRadius="0dp"
+            android:fontFamily="@font/dm_sans"
             android:textStyle="bold"
             android:paddingHorizontal="14dp" />
     </LinearLayout>
@@ -63,7 +62,7 @@
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_marginBottom="12dp"
-        app:cardCornerRadius="8dp"
+        app:cardCornerRadius="0dp"
         app:cardElevation="0dp"
         app:strokeWidth="1dp"
         app:strokeColor="@color/border"
@@ -93,7 +92,7 @@
                 android:textSize="14sp"
                 android:textColor="@color/text_dark"
                 android:textColorHint="@color/text_muted"
-                android:fontFamily="@font/google_sans_code"
+                android:fontFamily="@font/dm_sans"
                 android:background="@android:color/transparent"
                 android:singleLine="true"
                 android:imeOptions="actionSearch"
@@ -117,7 +116,7 @@
         android:layout_height="wrap_content"
         android:text="No logs recorded yet."
         android:textColor="@color/text_muted"
-        android:fontFamily="@font/google_sans_code"
+        android:fontFamily="@font/dm_sans"
         android:gravity="center"
         android:padding="32dp"
         android:visibility="gone" />

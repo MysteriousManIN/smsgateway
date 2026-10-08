@@ -9,11 +9,32 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="16dp"
-        android:paddingBottom="24dp">
+        android:paddingHorizontal="20dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="32dp">
 
-        <!-- 2x2 Grid counters — colorful pastel cards -->
+        <!-- Masthead -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SMS Dispatch Console"
+            android:textSize="30sp"
+            android:textColor="@color/text_dark"
+            android:fontFamily="@font/italiana_regular"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Overview section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Overview"
+            android:textSize="12sp"
+            android:letterSpacing="0.14"
+            android:textColor="@color/text_muted"
+            android:fontFamily="@font/dm_sans"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -21,10 +42,10 @@
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
-                android:layout_height="110dp"
+                android:layout_height="120dp"
                 android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                app:cardCornerRadius="16dp"
+                android:layout_marginEnd="6dp"
+                app:cardCornerRadius="0dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/border"
@@ -40,22 +61,21 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="TOTAL SENT"
+                        android:text="SENT"
                         android:textSize="11sp"
-                        android:letterSpacing="0.08"
-                        android:textColor="@color/statSentFg"
-                        android:fontFamily="@font/google_sans_code" />
+                        android:letterSpacing="0.12"
+                        android:textColor="@color/text_muted"
+                        android:fontFamily="@font/dm_sans" />
 
                     <TextView
                         android:id="@+id/tvSent"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
-                        android:textSize="28sp"
+                        android:textSize="40sp"
                         android:textColor="@color/statSentFg"
-                        android:fontFamily="@font/google_sans_code"
-                        android:textStyle="bold"
-                        android:layout_marginTop="8dp" />
+                        android:fontFamily="@font/italiana_regular"
+                        android:layout_marginTop="4dp" />
 
                     <TextView
                         android:id="@+id/tvPollInfo"
@@ -64,17 +84,17 @@
                         android:text="poll 15s"
                         android:textSize="11sp"
                         android:textColor="@color/text_muted"
-                        android:fontFamily="@font/google_sans_code"
+                        android:fontFamily="@font/dm_sans"
                         android:visibility="gone" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
-                android:layout_height="110dp"
+                android:layout_height="120dp"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                app:cardCornerRadius="16dp"
+                android:layout_marginStart="6dp"
+                app:cardCornerRadius="0dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/border"
@@ -91,20 +111,19 @@
                         android:layout_height="wrap_content"
                         android:text="PENDING"
                         android:textSize="11sp"
-                        android:letterSpacing="0.08"
-                        android:textColor="@color/statPendingFg"
-                        android:fontFamily="@font/google_sans_code" />
+                        android:letterSpacing="0.12"
+                        android:textColor="@color/text_muted"
+                        android:fontFamily="@font/dm_sans" />
 
                     <TextView
                         android:id="@+id/tvPending"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="—"
-                        android:textSize="28sp"
+                        android:textSize="40sp"
                         android:textColor="@color/statPendingFg"
-                        android:fontFamily="@font/google_sans_code"
-                        android:textStyle="bold"
-                        android:layout_marginTop="8dp" />
+                        android:fontFamily="@font/italiana_regular"
+                        android:layout_marginTop="4dp" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -112,7 +131,7 @@
                         android:text="next poll 15s"
                         android:textSize="11sp"
                         android:textColor="@color/text_muted"
-                        android:fontFamily="@font/google_sans_code"
+                        android:fontFamily="@font/dm_sans"
                         android:visibility="gone" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -122,15 +141,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="24dp">
+            android:layout_marginTop="12dp">
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
-                android:layout_height="110dp"
+                android:layout_height="120dp"
                 android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                app:cardCornerRadius="16dp"
+                android:layout_marginEnd="6dp"
+                app:cardCornerRadius="0dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/border"
@@ -147,20 +165,19 @@
                         android:layout_height="wrap_content"
                         android:text="GATEWAYS"
                         android:textSize="11sp"
-                        android:letterSpacing="0.08"
-                        android:textColor="@color/statGatewaysFg"
-                        android:fontFamily="@font/google_sans_code" />
+                        android:letterSpacing="0.12"
+                        android:textColor="@color/text_muted"
+                        android:fontFamily="@font/dm_sans" />
 
                     <TextView
                         android:id="@+id/tvGatewaysCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
-                        android:textSize="28sp"
+                        android:textSize="40sp"
                         android:textColor="@color/statGatewaysFg"
-                        android:fontFamily="@font/google_sans_code"
-                        android:textStyle="bold"
-                        android:layout_marginTop="8dp" />
+                        android:fontFamily="@font/italiana_regular"
+                        android:layout_marginTop="4dp" />
 
                     <TextView
                         android:id="@+id/tvGatewaysSub"
@@ -169,16 +186,16 @@
                         android:text="active"
                         android:textSize="11sp"
                         android:textColor="@color/text_muted"
-                        android:fontFamily="@font/google_sans_code" />
+                        android:fontFamily="@font/dm_sans" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
-                android:layout_height="110dp"
+                android:layout_height="120dp"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                app:cardCornerRadius="16dp"
+                android:layout_marginStart="6dp"
+                app:cardCornerRadius="0dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/border"
@@ -195,20 +212,19 @@
                         android:layout_height="wrap_content"
                         android:text="FAILED"
                         android:textSize="11sp"
-                        android:letterSpacing="0.08"
-                        android:textColor="@color/statFailedFg"
-                        android:fontFamily="@font/google_sans_code" />
+                        android:letterSpacing="0.12"
+                        android:textColor="@color/text_muted"
+                        android:fontFamily="@font/dm_sans" />
 
                     <TextView
                         android:id="@+id/tvFailed"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
-                        android:textSize="28sp"
+                        android:textSize="40sp"
                         android:textColor="@color/statFailedFg"
-                        android:fontFamily="@font/google_sans_code"
-                        android:textStyle="bold"
-                        android:layout_marginTop="8dp" />
+                        android:fontFamily="@font/italiana_regular"
+                        android:layout_marginTop="4dp" />
 
                     <TextView
                         android:id="@+id/tvActivitySub"
@@ -217,23 +233,79 @@
                         android:text="Sent: 0"
                         android:textSize="11sp"
                         android:textColor="@color/text_muted"
-                        android:fontFamily="@font/google_sans_code"
+                        android:fontFamily="@font/dm_sans"
                         android:visibility="gone" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
-        <!-- Legacy hidden views for code compat — ponytail: keep ids but gone -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/border"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Service section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Service"
+            android:textSize="12sp"
+            android:letterSpacing="0.14"
+            android:textColor="@color/text_muted"
+            android:fontFamily="@font/dm_sans"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp" />
+
         <TextView
             android:id="@+id/tvServiceStatus"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Service: Stopped"
+            android:textSize="22sp"
+            android:textColor="@color/text_dark"
+            android:fontFamily="@font/italiana_regular" />
+
         <TextView
             android:id="@+id/tvLastPoll"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Last: —"
+            android:textSize="13sp"
+            android:textColor="@color/text_muted"
+            android:fontFamily="@font/dm_sans"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="16dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnToggleService"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="Start Service"
+            android:textSize="14sp"
+            android:letterSpacing="0.06"
+            android:textColor="@color/white"
+            app:backgroundTint="@color/text_dark"
+            android:fontFamily="@font/dm_sans"
+            android:textStyle="bold"
+            app:cornerRadius="0dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnBattery"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="12dp"
+            android:text="Disable battery optimization"
+            android:textSize="13sp"
+            android:textColor="@color/text_dark"
+            app:strokeColor="@color/border"
+            app:strokeWidth="1dp"
+            android:fontFamily="@font/dm_sans"
+            app:cornerRadius="0dp" />
+
+        <!-- Legacy hidden views for code compat -->
         <TextView
             android:id="@+id/tvWelcomeSub"
             android:layout_width="0dp"
@@ -262,16 +334,6 @@
             android:visibility="gone" />
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etTestMessage"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnToggleService"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnBattery"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:visibility="gone" />

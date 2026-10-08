@@ -30,22 +30,21 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Gateways"
-                    android:textSize="20sp"
+                    android:textSize="34sp"
                     android:textColor="@color/text_dark"
-                    android:fontFamily="@font/google_sans_code"
-                    android:textStyle="bold" />
+                    android:fontFamily="@font/italiana_regular" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="MANAGE BACKENDS"
                     android:textSize="11sp"
-                    android:letterSpacing="0.07"
+                    android:letterSpacing="0.14"
                     android:textColor="@color/text_muted"
-                    android:fontFamily="@font/google_sans_code" />
+                    android:fontFamily="@font/dm_sans" />
             </LinearLayout>
 
-            <!-- Colorful indigo Add button, soft 12dp -->
+            <!-- Sharp black add button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/fabAdd"
                 android:layout_width="wrap_content"
@@ -53,9 +52,9 @@
                 android:text="Add"
                 android:textSize="13sp"
                 android:textColor="@color/white"
-                app:backgroundTint="@color/primary"
-                app:cornerRadius="12dp"
-                android:fontFamily="@font/google_sans_code"
+                app:backgroundTint="@color/text_dark"
+                app:cornerRadius="0dp"
+                android:fontFamily="@font/dm_sans"
                 android:textStyle="bold"
                 android:paddingHorizontal="16dp"
                 app:icon="@drawable/ic_add"
@@ -80,7 +79,7 @@
             android:layout_height="wrap_content"
             android:text="No gateways yet. Tap + Add to create."
             android:textColor="@color/text_muted"
-            android:fontFamily="@font/google_sans_code"
+            android:fontFamily="@font/dm_sans"
             android:gravity="center"
             android:padding="24dp"
             android:visibility="gone" />

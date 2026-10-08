@@ -8,7 +8,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.smsgateway"
+        applicationId = "com.sandesh.app"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

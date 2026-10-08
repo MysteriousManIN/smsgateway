@@ -23,7 +23,7 @@
             android:padding="8dp"
             android:visibility="gone"
             android:gravity="center"
-            android:fontFamily="@font/google_sans_code"
+            android:fontFamily="@font/dm_sans"
             android:textSize="12sp" />
 
         <!-- Top bar — monochrome: hamburger 24dp + smsgateway -->
@@ -51,11 +51,10 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="12dp"
-                android:text="smsgateway"
-                android:textSize="18sp"
+                android:text="Sandesh"
+                android:textSize="24sp"
                 android:textColor="@color/text_dark"
-                android:fontFamily="@font/google_sans_code"
-                android:textStyle="bold"
+                android:fontFamily="@font/italiana_regular"
                 android:letterSpacing="0.02" />
         </LinearLayout>
 
@@ -97,11 +96,10 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="smsgateway"
-                    android:textSize="18sp"
+                    android:text="Sandesh"
+                    android:textSize="26sp"
                     android:textColor="@color/text_dark"
-                    android:fontFamily="@font/google_sans_code"
-                    android:textStyle="bold"
+                    android:fontFamily="@font/italiana_regular"
                     android:letterSpacing="0.02" />
             </LinearLayout>
 
@@ -120,7 +118,6 @@
                 android:gravity="center_vertical"
                 android:paddingHorizontal="16dp"
                 android:layout_marginHorizontal="8dp"
-                android:background="@drawable/bg_drawer_selected_6"
                 android:clickable="true"
                 android:focusable="true">
 
@@ -138,7 +135,7 @@
                     android:text="Home"
                     android:textSize="14sp"
                     android:textColor="@color/text_dark"
-                    android:fontFamily="@font/google_sans_code"
+                    android:fontFamily="@font/dm_sans"
                     android:textStyle="bold"
                     android:layout_marginStart="12dp" />
             </LinearLayout>
@@ -170,7 +167,7 @@
                     android:text="Gateway"
                     android:textSize="14sp"
                     android:textColor="@color/text_muted"
-                    android:fontFamily="@font/google_sans_code"
+                    android:fontFamily="@font/dm_sans"
                     android:layout_marginStart="12dp" />
             </LinearLayout>
 
@@ -201,7 +198,7 @@
                     android:text="Logs"
                     android:textSize="14sp"
                     android:textColor="@color/text_muted"
-                    android:fontFamily="@font/google_sans_code"
+                    android:fontFamily="@font/dm_sans"
                     android:layout_marginStart="12dp" />
             </LinearLayout>
 
@@ -232,7 +229,7 @@
                     android:text="Settings"
                     android:textSize="14sp"
                     android:textColor="@color/text_muted"
-                    android:fontFamily="@font/google_sans_code"
+                    android:fontFamily="@font/dm_sans"
                     android:layout_marginStart="12dp" />
             </LinearLayout>
 
@@ -246,10 +243,10 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="smsgateway v1.0.0"
+                android:text="Sandesh v1.0.0"
                 android:textSize="11sp"
                 android:textColor="@color/text_muted"
-                android:fontFamily="@font/google_sans_code"
+                android:fontFamily="@font/dm_sans"
                 android:layout_marginStart="20dp"
                 android:layout_marginTop="16dp" />
         </LinearLayout>

@@ -169,7 +169,7 @@ class SmsForegroundService : Service() {
         val fullContent = "$gatewayCount gateways • $content | Sent:$sent Failed:$failed | Last:$last"
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("smsgateway active")
+            .setContentTitle(getString(R.string.notif_title))
             .setContentText(fullContent)
             .setStyle(NotificationCompat.BigTextStyle().bigText(fullContent))
             .setSmallIcon(android.R.drawable.ic_dialog_email)

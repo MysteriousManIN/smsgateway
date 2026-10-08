@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- Encrypted prefs + keyset must never be backed up: restore breaks
+             keystore MAC verification and causes instant-crash loop -->
+        <exclude domain="sharedpref" path="__androidx_security_crypto_encrypted_prefs_key_keyset__" />
+        <exclude domain="sharedpref" path="sms_gateway_prefs" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="__androidx_security_crypto_encrypted_prefs_key_keyset__" />
+        <exclude domain="sharedpref" path="sms_gateway_prefs" />
+    </device-transfer>
+</data-extraction-rules>

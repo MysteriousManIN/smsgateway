@@ -17,10 +17,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Settings"
-            android:textSize="20sp"
+            android:textSize="34sp"
             android:textColor="@color/text_dark"
-            android:fontFamily="@font/google_sans_code"
-            android:textStyle="bold"
+            android:fontFamily="@font/italiana_regular"
             android:layout_marginBottom="4dp" />
 
         <TextView
@@ -28,20 +27,20 @@
             android:layout_height="wrap_content"
             android:text="CONFIGURE APP"
             android:textSize="11sp"
-            android:letterSpacing="0.07"
+            android:letterSpacing="0.14"
             android:textColor="@color/text_muted"
-            android:fontFamily="@font/google_sans_code"
+            android:fontFamily="@font/dm_sans"
             android:layout_marginBottom="16dp" />
 
         <!-- Service controls — Switch Start/Stop, sharp 8dp -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
+            app:cardCornerRadius="0dp"
             app:cardElevation="0dp"
-            app:strokeWidth="1dp"
+            app:strokeWidth="0dp"
             app:strokeColor="@color/border"
-            app:cardBackgroundColor="@color/white"
+            app:cardBackgroundColor="@color/bg_light"
             android:layout_marginBottom="12dp">
 
             <LinearLayout
@@ -63,7 +62,7 @@
                         android:text="Service Controls"
                         android:textSize="14sp"
                         android:textColor="@color/text_dark"
-                        android:fontFamily="@font/google_sans_code"
+                        android:fontFamily="@font/dm_sans"
                         android:textStyle="bold" />
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
@@ -79,9 +78,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Start or stop foreground polling service"
-                    android:textSize="12sp"
+                    android:textSize="13sp"
                     android:textColor="@color/text_muted"
-                    android:fontFamily="@font/google_sans_code"
+                    android:fontFamily="@font/dm_sans"
                     android:layout_marginTop="4dp" />
 
                 <!-- Legacy btnBattery keep hidden for compat if needed -->
@@ -93,15 +92,65 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/border"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- SIM selection — same 16dp inset as Service Controls card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:layout_marginBottom="4dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SIM FOR SENDING"
+                android:textSize="11sp"
+                android:letterSpacing="0.14"
+                android:textColor="@color/text_muted"
+                android:fontFamily="@font/dm_sans"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:id="@+id/tvSimInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Checking SIMs…"
+                android:textSize="13sp"
+                android:textColor="@color/text_muted"
+                android:fontFamily="@font/dm_sans"
+                android:layout_marginBottom="4dp" />
+
+            <LinearLayout
+                android:id="@+id/simContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/border"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="16dp" />
+
         <!-- Battery — Switch disable optimization -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
+            app:cardCornerRadius="0dp"
             app:cardElevation="0dp"
-            app:strokeWidth="1dp"
+            app:strokeWidth="0dp"
             app:strokeColor="@color/border"
-            app:cardBackgroundColor="@color/white"
+            app:cardBackgroundColor="@color/bg_light"
             android:layout_marginBottom="12dp">
 
             <LinearLayout
@@ -128,7 +177,7 @@
                             android:text="Battery optimization"
                             android:textSize="14sp"
                             android:textColor="@color/text_dark"
-                            android:fontFamily="@font/google_sans_code"
+                            android:fontFamily="@font/dm_sans"
                             android:textStyle="bold" />
 
                         <TextView
@@ -138,7 +187,7 @@
                             android:text="Status: checking..."
                             android:textSize="12sp"
                             android:textColor="@color/text_muted"
-                            android:fontFamily="@font/google_sans_code"
+                            android:fontFamily="@font/dm_sans"
                             android:layout_marginTop="2dp" />
                     </LinearLayout>
 
@@ -153,15 +202,22 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/border"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="16dp" />
+
         <!-- Theme / Appearance — System default / Light / Dark sharp monochrome -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
+            app:cardCornerRadius="0dp"
             app:cardElevation="0dp"
-            app:strokeWidth="1dp"
+            app:strokeWidth="0dp"
             app:strokeColor="@color/border"
-            app:cardBackgroundColor="@color/white"
+            app:cardBackgroundColor="@color/bg_light"
             android:layout_marginBottom="12dp">
 
             <LinearLayout
@@ -176,7 +232,7 @@
                     android:text="Appearance"
                     android:textSize="14sp"
                     android:textColor="@color/text_dark"
-                    android:fontFamily="@font/google_sans_code"
+                    android:fontFamily="@font/dm_sans"
                     android:textStyle="bold" />
 
                 <TextView
@@ -185,7 +241,7 @@
                     android:text="Choose application theme"
                     android:textSize="12sp"
                     android:textColor="@color/text_muted"
-                    android:fontFamily="@font/google_sans_code"
+                    android:fontFamily="@font/dm_sans"
                     android:layout_marginTop="2dp"
                     android:layout_marginBottom="8dp" />
 
@@ -202,7 +258,7 @@
                         android:text="System default"
                         android:textSize="14sp"
                         android:textColor="@color/text_dark"
-                        android:fontFamily="@font/google_sans_code"
+                        android:fontFamily="@font/dm_sans"
                         app:buttonTint="@color/radio_button_tint"
                         app:useMaterialThemeColors="false"
                         android:paddingVertical="4dp" />
@@ -214,7 +270,7 @@
                         android:text="Light"
                         android:textSize="14sp"
                         android:textColor="@color/text_dark"
-                        android:fontFamily="@font/google_sans_code"
+                        android:fontFamily="@font/dm_sans"
                         app:buttonTint="@color/radio_button_tint"
                         app:useMaterialThemeColors="false"
                         android:paddingVertical="4dp" />
@@ -226,7 +282,7 @@
                         android:text="Dark"
                         android:textSize="14sp"
                         android:textColor="@color/text_dark"
-                        android:fontFamily="@font/google_sans_code"
+                        android:fontFamily="@font/dm_sans"
                         app:buttonTint="@color/radio_button_tint"
                         app:useMaterialThemeColors="false"
                         android:paddingVertical="4dp" />
@@ -234,15 +290,22 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/border"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="16dp" />
+
         <!-- Polling info — grey block sharp 6dp -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
+            app:cardCornerRadius="0dp"
             app:cardElevation="0dp"
-            app:strokeWidth="1dp"
+            app:strokeWidth="0dp"
             app:strokeColor="@color/border"
-            app:cardBackgroundColor="@color/white"
+            app:cardBackgroundColor="@color/bg_light"
             android:layout_marginBottom="12dp">
 
             <LinearLayout
@@ -257,7 +320,7 @@
                     android:text="Polling"
                     android:textSize="14sp"
                     android:textColor="@color/text_dark"
-                    android:fontFamily="@font/google_sans_code"
+                    android:fontFamily="@font/dm_sans"
                     android:textStyle="bold" />
 
                 <TextView
@@ -265,12 +328,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Polls enabled gateways every 15s"
-                    android:textSize="12sp"
+                    android:textSize="13sp"
                     android:textColor="@color/text_muted"
-                    android:fontFamily="@font/google_sans_code"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/bg_mono_grey_6"
-                    android:padding="12dp" />
+                    android:fontFamily="@font/dm_sans"
+                    android:layout_marginTop="4dp" />
 
                 <TextView
                     android:id="@+id/tvStatsSummary"
@@ -279,21 +340,28 @@
                     android:text="Sent: 0 • Failed: 0"
                     android:textSize="12sp"
                     android:textColor="@color/text_muted"
-                    android:fontFamily="@font/google_sans_code"
+                    android:fontFamily="@font/dm_sans"
                     android:layout_marginTop="8dp"
                     android:visibility="gone" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/border"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="16dp" />
+
         <!-- App info — only name + version sharp -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
+            app:cardCornerRadius="0dp"
             app:cardElevation="0dp"
-            app:strokeWidth="1dp"
+            app:strokeWidth="0dp"
             app:strokeColor="@color/border"
-            app:cardBackgroundColor="@color/white"
+            app:cardBackgroundColor="@color/bg_light"
             android:layout_marginBottom="16dp">
 
             <LinearLayout
@@ -306,10 +374,10 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="smsgateway"
+                    android:text="Sandesh"
                     android:textSize="14sp"
                     android:textColor="@color/text_dark"
-                    android:fontFamily="@font/google_sans_code"
+                    android:fontFamily="@font/dm_sans"
                     android:textStyle="bold" />
 
                 <TextView
@@ -318,7 +386,7 @@
                     android:text="v1.0.0"
                     android:textSize="14sp"
                     android:textColor="@color/text_muted"
-                    android:fontFamily="@font/google_sans_code"
+                    android:fontFamily="@font/dm_sans"
                     android:layout_marginTop="2dp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

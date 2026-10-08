@@ -2,6 +2,7 @@ package com.smsgateway
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.squareup.moshi.Moshi
@@ -14,17 +15,49 @@ import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
  */
 class Prefs private constructor(context: Context) {
 
-    private val masterKey = MasterKey.Builder(context)
-        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-        .build()
+    private val appContext = context.applicationContext
+    private val prefs: SharedPreferences = createOrRecoverPrefs(appContext)
 
-    private val prefs: SharedPreferences = EncryptedSharedPreferences.create(
-        context,
-        PREF_NAME,
-        masterKey,
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
+    private fun buildMasterKey(context: Context): MasterKey {
+        return MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+    }
+
+    private fun encryptedPrefs(context: Context, masterKey: MasterKey): SharedPreferences {
+        return EncryptedSharedPreferences.create(
+            context,
+            PREF_NAME,
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    }
+
+    /**
+     * Keystore / keyset corruption (e.g. after backup restore or reinstall)
+     * throws AEADBadTagException on every launch = instant-crash loop.
+     * Wipe the corrupted state once and start fresh instead of dying.
+     */
+    private fun createOrRecoverPrefs(context: Context): SharedPreferences {
+        try {
+            return encryptedPrefs(context, buildMasterKey(context))
+        } catch (e: Exception) {
+            Log.e(TAG, "Encrypted prefs corrupt — wiping and recreating fresh", e)
+            wipeCorruptedState(context)
+            return encryptedPrefs(context, buildMasterKey(context))
+        }
+    }
+
+    private fun wipeCorruptedState(context: Context) {
+        try { context.deleteSharedPreferences(PREF_NAME) } catch (_: Exception) {}
+        try { context.deleteSharedPreferences(KEYSET_PREF_NAME) } catch (_: Exception) {}
+        try {
+            val ks = java.security.KeyStore.getInstance("AndroidKeyStore")
+            ks.load(null)
+            ks.deleteEntry(MasterKey.DEFAULT_MASTER_KEY_ALIAS)
+        } catch (_: Exception) {}
+    }
 
     private val moshi: Moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
     private val listType = Types.newParameterizedType(List::class.java, BackendConfig::class.java)
@@ -64,6 +97,20 @@ class Prefs private constructor(context: Context) {
         set(v) { prefs.edit().putBoolean(KEY_SERVICE_ENABLED, v).apply() }
 
     fun isServiceEnabled(): Boolean = serviceEnabled
+
+    // --- selected SIM for sending (-1 = system default) ---
+    var simSubscriptionId: Int
+        get() = prefs.getInt(KEY_SIM_SUB_ID, -1)
+        set(v) { prefs.edit().putInt(KEY_SIM_SUB_ID, v).apply() }
+
+    var simDisplayName: String?
+        get() = prefs.getString(KEY_SIM_NAME, null)
+        set(v) { prefs.edit().putString(KEY_SIM_NAME, v).apply() }
+
+    // --- permission bookkeeping ---
+    var permSmsAsked: Boolean
+        get() = prefs.getBoolean(KEY_PERM_SMS_ASKED, false)
+        set(v) { prefs.edit().putBoolean(KEY_PERM_SMS_ASKED, v).apply() }
 
     // --- multi-backend ---
     fun getBackends(): List<BackendConfig> {
@@ -185,6 +232,9 @@ class Prefs private constructor(context: Context) {
         const val THEME_LIGHT = 1
         const val THEME_DARK = 2
 
+        private const val TAG = "SmsGateway"
+        private const val KEYSET_PREF_NAME = "__androidx_security_crypto_encrypted_prefs_key_keyset__"
+
         private const val PREF_NAME = "sms_gateway_prefs"
         private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_BACKEND_URL = "backend_url"
@@ -195,6 +245,9 @@ class Prefs private constructor(context: Context) {
         private const val KEY_BACKEND_CONFIGS = "backend_configs"
         private const val KEY_MIGRATED = "backend_migrated_v2"
         private const val KEY_SERVICE_ENABLED = "service_enabled"
+        private const val KEY_SIM_SUB_ID = "sim_sub_id"
+        private const val KEY_SIM_NAME = "sim_name"
+        private const val KEY_PERM_SMS_ASKED = "perm_sms_asked"
 
         @Volatile
         private var INSTANCE: Prefs? = null

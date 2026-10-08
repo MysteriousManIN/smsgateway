@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
-    app:cardCornerRadius="16dp"
+    app:cardCornerRadius="0dp"
     app:cardElevation="0dp"
     app:strokeWidth="1dp"
     app:strokeColor="@color/border"
@@ -42,10 +42,9 @@
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
                 android:text="Default"
-                android:textSize="16sp"
+                android:textSize="22sp"
                 android:textColor="@color/text_dark"
-                android:fontFamily="@font/google_sans_code"
-                android:textStyle="bold"
+                android:fontFamily="@font/italiana_regular"
                 android:maxLines="1"
                 android:ellipsize="end" />
 
@@ -57,7 +56,7 @@
                 android:textSize="10sp"
                 android:letterSpacing="0.06"
                 android:textColor="@color/text_muted"
-                android:fontFamily="@font/google_sans_code"
+                android:fontFamily="@font/dm_sans"
                 android:background="@drawable/bg_chip_white_rounded16"
                 android:paddingHorizontal="8dp"
                 android:paddingVertical="4dp" />
@@ -70,7 +69,7 @@
             android:text="https://erp.example.com"
             android:textSize="12sp"
             android:textColor="@color/text_muted"
-            android:fontFamily="@font/google_sans_code"
+            android:fontFamily="@font/dm_sans"
             android:maxLines="1"
             android:ellipsize="middle"
             android:layout_marginTop="10dp" />
@@ -82,11 +81,17 @@
             android:text="tokn••••1234"
             android:textSize="11sp"
             android:textColor="#6B7280"
-            android:fontFamily="@font/google_sans_code"
+            android:fontFamily="@font/dm_sans"
             android:background="@drawable/bg_mono_grey_6"
             android:paddingHorizontal="8dp"
             android:paddingVertical="4dp"
             android:layout_marginTop="6dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/border"
+            android:layout_marginTop="14dp" />
 
         <!-- Connection switch — single (Test Send removed) -->
         <LinearLayout
@@ -103,7 +108,7 @@
                 android:text="Connection"
                 android:textSize="12sp"
                 android:textColor="@color/text_dark"
-                android:fontFamily="@font/google_sans_code" />
+                android:fontFamily="@font/dm_sans" />
 
             <com.google.android.material.switchmaterial.SwitchMaterial
                 android:id="@+id/switchEnabled"
@@ -129,9 +134,9 @@
                 android:text="Edit"
                 android:textSize="11sp"
                 android:textColor="@color/white"
-                app:backgroundTint="@color/primary"
-                android:fontFamily="@font/google_sans_code"
-                app:cornerRadius="12dp" />
+                app:backgroundTint="@color/text_dark"
+                android:fontFamily="@font/dm_sans"
+                app:cornerRadius="0dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDelete"
@@ -144,8 +149,8 @@
                 android:textColor="@color/text_dark"
                 android:textSize="11sp"
                 app:strokeColor="@color/border"
-                android:fontFamily="@font/google_sans_code"
-                app:cornerRadius="6dp" />
+                android:fontFamily="@font/dm_sans"
+                app:cornerRadius="0dp" />
         </LinearLayout>
 
         <!-- Per-connection Clear logs button — monochrome outline 6dp -->
@@ -158,8 +163,8 @@
             android:textSize="11sp"
             android:textColor="@color/text_muted"
             app:strokeColor="@color/border"
-            android:fontFamily="@font/google_sans_code"
-            app:cornerRadius="6dp"
+            android:fontFamily="@font/dm_sans"
+            app:cornerRadius="0dp"
             android:layout_marginTop="8dp" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

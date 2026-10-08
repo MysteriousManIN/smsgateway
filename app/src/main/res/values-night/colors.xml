@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Dark mode — dark gray -->
+    <!-- Dark mode — dark gray monochrome -->
     <color name="bg_light">#FF1E1E1E</color>
     <color name="bg_surface">#FF2A2A2A</color>
     <color name="bg_search">#FF2A2A2A</color>
@@ -10,58 +10,58 @@
     <color name="grey_bg">#FF333333</color>
     <color name="text_dark">#FFF5F5F5</color>
     <color name="text_primary">#FFF5F5F5</color>
-    <color name="text_muted">#FFB3B3B3</color>
-    <color name="text_secondary">#FFB3B3B3</color>
-    <color name="text_hint">#FF8A8A8A</color>
-    <color name="primary">#FF9AA5FF</color>
-    <color name="primaryBlue">#FF9AA5FF</color>
-    <color name="primary_accent">#FFB9A7FF</color>
+    <color name="text_muted">#FFA3A3A3</color>
+    <color name="text_secondary">#FFA3A3A3</color>
+    <color name="text_hint">#FF737373</color>
+    <color name="primary">#FFF5F5F5</color>
+    <color name="primaryBlue">#FFF5F5F5</color>
+    <color name="primary_accent">#FFF5F5F5</color>
     <color name="white">#FF2A2A2A</color>
     <color name="black">#FFF5F5F5</color>
-    <color name="offline_red">#FFFB7185</color>
-    <color name="success_green">#FF34D399</color>
-    <color name="dot_online">#FF34D399</color>
-    <color name="dot_offline">#FF6E6E6E</color>
-    <color name="dot_idle">#FFFBBF24</color>
+    <color name="offline_red">#FFF5F5F5</color>
+    <color name="success_green">#FFF5F5F5</color>
+    <color name="dot_online">#FFF5F5F5</color>
+    <color name="dot_offline">#FF525252</color>
+    <color name="dot_idle">#FFA3A3A3</color>
 
     <!-- Monochrome explicit -->
     <color name="mono_bg">#FF1E1E1E</color>
     <color name="mono_card">#FF2A2A2A</color>
     <color name="mono_text">#FFF5F5F5</color>
-    <color name="mono_muted">#FFB3B3B3</color>
+    <color name="mono_muted">#FFA3A3A3</color>
     <color name="mono_border">#FF3D3D3D</color>
-    <color name="mono_black">#FF9AA5FF</color>
+    <color name="mono_black">#FFF5F5F5</color>
     <color name="mono_grey_bg">#FF333333</color>
     <color name="card_stroke">#FF3D3D3D</color>
     <color name="chip_bg">#FF2A2A2A</color>
 
-    <!-- Accents for dark gray -->
-    <color name="accentRed">#FFFB7185</color>
-    <color name="accentRedBright">#FFF43F5E</color>
-    <color name="accentRedBg">#FF453035</color>
+    <!-- Accents mapped to dark grays -->
+    <color name="accentRed">#FFF5F5F5</color>
+    <color name="accentRedBright">#FFFFFFFF</color>
+    <color name="accentRedBg">#FF333333</color>
     <color name="accentRedLight">#FF1E1E1E</color>
-    <color name="accentYellow">#FFFBBF24</color>
-    <color name="accentYellowBg">#FF4A3D20</color>
-    <color name="accentYellowDeep">#FFF59E0B</color>
-    <color name="accentMint">#FF34D399</color>
-    <color name="accentMintBg">#FF25473B</color>
+    <color name="accentYellow">#FFA3A3A3</color>
+    <color name="accentYellowBg">#FF333333</color>
+    <color name="accentYellowDeep">#FF737373</color>
+    <color name="accentMint">#FFF5F5F5</color>
+    <color name="accentMintBg">#FF333333</color>
     <color name="accentMintLight">#FF1E1E1E</color>
-    <color name="accentLavender">#FF3D3A5C</color>
-    <color name="accentPeach">#FF4A3A28</color>
+    <color name="accentLavender">#FF333333</color>
+    <color name="accentPeach">#FF1E1E1E</color>
     <color name="accentCream">#FF1E1E1E</color>
-    <color name="accentBlue">#FF9AA5FF</color>
-    <color name="accentBlueLight">#FF9AA5FF</color>
-    <color name="avatarYellow">#FF4A3D20</color>
+    <color name="accentBlue">#FFF5F5F5</color>
+    <color name="accentBlueLight">#FFF5F5F5</color>
+    <color name="avatarYellow">#FF333333</color>
 
-    <!-- Stat card tints (dark gray) -->
-    <color name="statSentBg">#FF25473B</color>
-    <color name="statSentFg">#FF5EEAB8</color>
-    <color name="statPendingBg">#FF4A3D20</color>
-    <color name="statPendingFg">#FFFCD34D</color>
-    <color name="statGatewaysBg">#FF343A63</color>
-    <color name="statGatewaysFg">#FFB9C0FF</color>
-    <color name="statFailedBg">#FF453035</color>
-    <color name="statFailedFg">#FFFDA4B8</color>
+    <!-- Stat cards (dark gray) -->
+    <color name="statSentBg">#FF2A2A2A</color>
+    <color name="statSentFg">#FFF5F5F5</color>
+    <color name="statPendingBg">#FF2A2A2A</color>
+    <color name="statPendingFg">#FFF5F5F5</color>
+    <color name="statGatewaysBg">#FF2A2A2A</color>
+    <color name="statGatewaysFg">#FFF5F5F5</color>
+    <color name="statFailedBg">#FF2A2A2A</color>
+    <color name="statFailedFg">#FFF5F5F5</color>
 
     <!-- Legacy mapped -->
     <color name="blue_bg">#FF1E1E1E</color>
@@ -77,9 +77,9 @@
     <color name="peach_dark">#FF3D3D3D</color>
     <color name="dark_nav">#FFF5F5F5</color>
     <color name="dark_nav_light">#FF333333</color>
-    <color name="purple_200">#FF8A8A8A</color>
-    <color name="purple_500">#FF9AA5FF</color>
-    <color name="purple_700">#FF9AA5FF</color>
-    <color name="teal_200">#FF8A8A8A</color>
-    <color name="teal_700">#FFB3B3B3</color>
+    <color name="purple_200">#FF737373</color>
+    <color name="purple_500">#FFF5F5F5</color>
+    <color name="purple_700">#FFFFFFFF</color>
+    <color name="teal_200">#FF737373</color>
+    <color name="teal_700">#FFA3A3A3</color>
 </resources>
