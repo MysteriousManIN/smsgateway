@@ -11,7 +11,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:background="@color/bg_light">
+        android:background="@color/bg_light"
+        android:fitsSystemWindows="true">
 
         <TextView
             android:id="@+id/tvOffline"
@@ -71,6 +72,7 @@
         android:layout_width="280dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
+        android:fitsSystemWindows="true"
         app:cardCornerRadius="0dp"
         app:cardElevation="0dp"
         app:strokeWidth="1dp"

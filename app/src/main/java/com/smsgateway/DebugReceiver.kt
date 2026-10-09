@@ -7,6 +7,11 @@ import android.util.Log
 
 class DebugReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        // Debug hooks must never run in release builds.
+        if (!BuildConfig.DEBUG) {
+            Log.w("SmsGateway", "DebugReceiver ignored in release")
+            return
+        }
         Log.d("SmsGateway", "DebugReceiver ${intent.action}")
         when (intent.action) {
             "com.smsgateway.ADD_DUMMY" -> {

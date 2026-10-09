@@ -39,7 +39,7 @@ class HomeFragment : Fragment() {
     private val refreshRunnable = object : Runnable {
         override fun run() {
             refreshStats()
-            handler.postDelayed(this, 2000)
+            handler.postDelayed(this, 5000)
         }
     }
 
@@ -160,21 +160,33 @@ class HomeFragment : Fragment() {
             Snackbar.make(root, "No gateways configured", Snackbar.LENGTH_LONG).show()
             return
         }
+        // Spinner was built from an older snapshot (add/delete re-renders it) —
+        // never apply a stale position to a fresh list.
+        if (spinner.count != backends.size) {
+            setupSpinner()
+            Snackbar.make(root, "Gateway list changed — please retry", Snackbar.LENGTH_SHORT).show()
+            return
+        }
         val idx = spinner.selectedItemPosition.coerceIn(0, backends.size - 1)
         val config = backends[idx]
         if (!config.enabled) {
             Snackbar.make(root, "${config.name} is disabled — enable first", Snackbar.LENGTH_LONG).show()
             return
         }
-        val phone = phoneView.text?.toString()?.trim() ?: ""
-        val msg = msgView.text?.toString()?.trim() ?: ""
-        if (phone.length < 10 || phone.length > 15 || !phone.matches(Regex("^[0-9]{10,15}$"))) {
-            phoneView.error = "Enter 10-15 digits"
+        val rawPhone = phoneView.text?.toString() ?: ""
+        val phone = SmsValidator.normalizePhone(rawPhone)
+        if (phone == null) {
+            phoneView.error = "Enter digits, e.g. 919876543210"
             return
         }
-        if (msg.isBlank()) {
-            msgView.error = "Enter message"
+        val msg = msgView.text?.toString()?.trim() ?: ""
+        if (!SmsValidator.isValidMessage(msg)) {
+            msgView.error = "Enter message (1–1000 chars)"
             return
+        }
+        val parts = SmsValidator.partCountEstimate(msg)
+        if (parts > 1) {
+            Toast.makeText(requireContext(), "Message will go as $parts parts", Toast.LENGTH_SHORT).show()
         }
         CoroutineScope(Dispatchers.IO).launch {
             try {

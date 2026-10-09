@@ -74,11 +74,13 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.drawerItemSettings).setOnClickListener { switchTab(3); closeDrawer() }
         findViewById<View>(R.id.btnHamburger).setOnClickListener { openDrawer() }
 
-        // back press handles drawer
+        // back press: close drawer first, then go Home, exit only from Home
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
                     closeDrawer()
+                } else if (currentTab != 0) {
+                    switchTab(0)
                 } else {
                     isEnabled = false
                     onBackPressedDispatcher.onBackPressed()

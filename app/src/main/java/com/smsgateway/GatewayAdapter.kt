@@ -19,8 +19,18 @@ class GatewayAdapter(
 ) : RecyclerView.Adapter<GatewayAdapter.VH>() {
 
     fun update(newItems: List<BackendConfig>) {
+        val diff = androidx.recyclerview.widget.DiffUtil.calculateDiff(
+            object : androidx.recyclerview.widget.DiffUtil.Callback() {
+                override fun getOldListSize(): Int = items.size
+                override fun getNewListSize(): Int = newItems.size
+                override fun areItemsTheSame(oldPos: Int, newPos: Int): Boolean =
+                    items[oldPos].id == newItems[newPos].id
+                override fun areContentsTheSame(oldPos: Int, newPos: Int): Boolean =
+                    items[oldPos] == newItems[newPos]
+            }
+        )
         items = newItems
-        notifyDataSetChanged()
+        diff.dispatchUpdatesTo(this)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
@@ -36,13 +46,14 @@ class GatewayAdapter(
         val statusText = when (c.lastStatus) {
             "ok" -> "online"
             "fail" -> "offline"
+            SmsForegroundService.STATUS_AUTH_ERROR -> "auth error"
+            SmsForegroundService.STATUS_CONFIG_ERROR -> "url error"
             else -> "idle"
         }
         holder.tvStatus.text = statusText
         holder.dot.setBackgroundResource(
             when (c.lastStatus) {
                 "ok" -> R.drawable.bg_dot_online
-                "fail" -> R.drawable.bg_dot_offline
                 else -> R.drawable.bg_dot_offline
             }
         )

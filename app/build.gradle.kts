@@ -10,7 +10,7 @@ android {
     defaultConfig {
         applicationId = "com.sandesh.app"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
 
@@ -69,4 +69,6 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
     // WorkManager already brings androidx.core etc
+
+    testImplementation("junit:junit:4.13.2")
 }

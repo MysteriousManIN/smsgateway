@@ -98,6 +98,8 @@ interface SmsApi {
  */
 object ApiClient {
     private val cache = mutableMapOf<String, SmsApi>()
+    /** Last known baseUrl+token per gateway id — rebuild entry only on change. */
+    private val fingerprints = mutableMapOf<String, String>()
     private val lock = Any()
 
     // Legacy single — kept for compat where old callers used getApi(context)
@@ -107,17 +109,13 @@ object ApiClient {
     fun forConfig(config: BackendConfig): SmsApi {
         val baseUrl = config.normalizedBaseUrl()
             ?: throw IllegalStateException("Backend ${config.name} URL must start with https://")
+        val fingerprint = baseUrl + "|" + config.token
         synchronized(lock) {
             val cached = cache[config.id]
-            // we need to check baseUrl change — if url or token changed, invalidate that entry
-            // simplest: if baseUrl differs from cached's baseUrl? We don't store baseUrl per id separately, so check token via needRecreate flag
-            // To keep simple, return cached if exists and baseUrl matches last used baseUrl for that id (store separately)
-            // Instead: store key as id + baseUrl + token hash -> easy
-            val key = config.id
-            val entry = cache[key]
-            // For ponytail: if token changed, caller should have called invalidate(config.id) via saveBackends -> invalidateAll()
-            // So just return cached if exists
-            if (entry != null) return entry
+            // Return cached entry only if URL/token are unchanged; otherwise rebuild.
+            // This makes hot paths (per-poll status writes) cheap even without
+            // explicit invalidation, and user edits take effect immediately.
+            if (cached != null && fingerprints[config.id] == fingerprint) return cached
 
             val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
             val authInterceptor = Interceptor { chain ->
@@ -133,7 +131,11 @@ object ApiClient {
                 .writeTimeout(15, TimeUnit.SECONDS)
                 .addInterceptor(authInterceptor)
             if (BuildConfig.DEBUG) {
-                val logging = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
+                val logging = HttpLoggingInterceptor().apply {
+                    level = HttpLoggingInterceptor.Level.BODY
+                    // Never print bearer tokens / message bodies to logcat.
+                    redactHeader("Authorization")
+                }
                 builder.addInterceptor(logging)
             }
             val client = builder.build()
@@ -143,7 +145,8 @@ object ApiClient {
                 .addConverterFactory(MoshiConverterFactory.create(moshi))
                 .build()
             val api = retrofit.create(SmsApi::class.java)
-            cache[key] = api
+            cache[config.id] = api
+            fingerprints[config.id] = fingerprint
             return api
         }
     }
@@ -172,7 +175,10 @@ object ApiClient {
             val builder = OkHttpClient.Builder()
                 .connectTimeout(10, TimeUnit.SECONDS).readTimeout(15, TimeUnit.SECONDS).writeTimeout(15, TimeUnit.SECONDS)
                 .addInterceptor(authInterceptor)
-            if (BuildConfig.DEBUG) builder.addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY })
+            if (BuildConfig.DEBUG) builder.addInterceptor(HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.BODY
+                redactHeader("Authorization")
+            })
             val client = builder.build()
             val retrofit = Retrofit.Builder().baseUrl(baseUrl).client(client).addConverterFactory(MoshiConverterFactory.create(moshi)).build()
             val api = retrofit.create(SmsApi::class.java)
@@ -186,10 +192,10 @@ object ApiClient {
     }
 
     fun invalidate(id: String) {
-        synchronized(lock) { cache.remove(id) }
+        synchronized(lock) { cache.remove(id); fingerprints.remove(id) }
     }
 
     fun invalidateAll() {
-        synchronized(lock) { cache.clear(); legacyApi = null; legacyBaseUrl = null }
+        synchronized(lock) { cache.clear(); fingerprints.clear(); legacyApi = null; legacyBaseUrl = null }
     }
 }

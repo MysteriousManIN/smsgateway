@@ -57,7 +57,7 @@
 
         <receiver
             android:name=".DebugReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.smsgateway.ADD_DUMMY" />
                 <action android:name="com.smsgateway.CLEAR_GATEWAYS" />

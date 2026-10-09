@@ -113,6 +113,7 @@ class Prefs private constructor(context: Context) {
         set(v) { prefs.edit().putBoolean(KEY_PERM_SMS_ASKED, v).apply() }
 
     // --- multi-backend ---
+    @Synchronized
     fun getBackends(): List<BackendConfig> {
         // migrate if needed
         migrateIfNeeded()
@@ -124,40 +125,128 @@ class Prefs private constructor(context: Context) {
         }
     }
 
+    @Synchronized
     fun saveBackends(list: List<BackendConfig>) {
+        persistBackends(list, invalidateApi = true)
+    }
+
+    /**
+     * Persist without touching ApiClient cache — for hot paths like per-poll
+     * status updates. Rebuilding Retrofit/OkHttp every 15s is pure waste
+     * since URL/token are unchanged. Callers editing URL/token must use
+     * saveBackends() (or ApiClient detects the change on next forConfig()).
+     */
+    @Synchronized
+    fun saveBackendsLight(list: List<BackendConfig>) {
+        persistBackends(list, invalidateApi = false)
+    }
+
+    private fun persistBackends(list: List<BackendConfig>, invalidateApi: Boolean) {
         // validate https
         for (c in list) {
             require(c.baseUrl.startsWith("https://")) { "Backend ${c.name} must start with https://" }
         }
         val json = adapter.toJson(list)
         prefs.edit().putString(KEY_BACKEND_CONFIGS, json).apply()
-        // invalidate ApiClient caches
-        ApiClient.invalidateAll()
+        if (invalidateApi) {
+            // invalidate ApiClient caches
+            ApiClient.invalidateAll()
+        }
     }
 
     fun getEnabledBackends(): List<BackendConfig> = getBackends().filter { it.enabled }
 
+    @Synchronized
     fun addBackend(config: BackendConfig) {
         val list = getBackends().toMutableList()
         list.add(config)
         saveBackends(list)
     }
 
+    @Synchronized
     fun updateBackend(config: BackendConfig) {
         val list = getBackends().map { if (it.id == config.id) config else it }
         saveBackends(list)
     }
 
+    @Synchronized
     fun deleteBackend(id: String) {
         val list = getBackends().filterNot { it.id == id }
         saveBackends(list)
     }
 
+    @Synchronized
     fun setBackendStatus(id: String, status: String) {
         val list = getBackends().map {
             if (it.id == id) it.copy(lastStatus = status, lastPollAt = System.currentTimeMillis()) else it
         }
-        saveBackends(list)
+        // light path: no ApiClient rebuild on every poll (see saveBackendsLight)
+        saveBackendsLight(list)
+    }
+
+    // ---------- Acked message IDs (duplicate-send guard) ----------
+
+    private val stringListType = Types.newParameterizedType(List::class.java, String::class.java)
+    private val stringListAdapter = moshi.adapter<List<String>>(stringListType)
+
+    /** IDs whose final status was reported (or queued) — skip re-sends. */
+    @Synchronized
+    fun isAcked(id: String): Boolean {
+        return try {
+            val json = prefs.getString(KEY_ACKED_IDS, null) ?: return false
+            (stringListAdapter.fromJson(json) ?: emptyList()).contains(id)
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    @Synchronized
+    fun markAcked(id: String) {
+        try {
+            val current = try {
+                stringListAdapter.fromJson(prefs.getString(KEY_ACKED_IDS, null) ?: "[]") ?: emptyList()
+            } catch (_: Exception) {
+                emptyList()
+            }
+            if (current.contains(id)) return
+            val pruned = (current + id).takeLast(MAX_ACKED_IDS)
+            prefs.edit().putString(KEY_ACKED_IDS, stringListAdapter.toJson(pruned)).apply()
+        } catch (_: Exception) {}
+    }
+
+    // ---------- Pending status outbox (postStatus retry across restarts) ----------
+
+    private val statusListType = Types.newParameterizedType(List::class.java, StatusRequest::class.java)
+    private val statusListAdapter = moshi.adapter<List<StatusRequest>>(statusListType)
+
+    /** Queue a status report that failed to reach the backend (deduped by id). */
+    @Synchronized
+    fun queuePendingStatus(req: StatusRequest) {
+        try {
+            val current = readPendingStatuses()
+            val updated = (current.filterNot { it.id == req.id } + req).takeLast(MAX_PENDING_STATUS)
+            prefs.edit().putString(KEY_PENDING_STATUS, statusListAdapter.toJson(updated)).apply()
+        } catch (_: Exception) {}
+    }
+
+    /** Drain the outbox (returns items and clears storage). */
+    @Synchronized
+    fun takePendingStatuses(): List<StatusRequest> {
+        return try {
+            val current = readPendingStatuses()
+            prefs.edit().remove(KEY_PENDING_STATUS).apply()
+            current
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun readPendingStatuses(): List<StatusRequest> {
+        return try {
+            statusListAdapter.fromJson(prefs.getString(KEY_PENDING_STATUS, null) ?: "[]") ?: emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
     }
 
     private fun migrateIfNeeded() {
@@ -248,6 +337,10 @@ class Prefs private constructor(context: Context) {
         private const val KEY_SIM_SUB_ID = "sim_sub_id"
         private const val KEY_SIM_NAME = "sim_name"
         private const val KEY_PERM_SMS_ASKED = "perm_sms_asked"
+        private const val KEY_ACKED_IDS = "acked_msg_ids"
+        private const val KEY_PENDING_STATUS = "pending_status_outbox"
+        private const val MAX_ACKED_IDS = 300
+        private const val MAX_PENDING_STATUS = 200
 
         @Volatile
         private var INSTANCE: Prefs? = null

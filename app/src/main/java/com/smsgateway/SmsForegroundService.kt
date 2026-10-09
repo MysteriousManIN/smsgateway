@@ -13,6 +13,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import kotlinx.coroutines.*
+import retrofit2.HttpException
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -88,8 +89,15 @@ class SmsForegroundService : Service() {
                 var lastPollStr = ""
 
                 for (config in enabled) {
+                    // Skip backends stuck in auth/config error until re-tested or edited.
+                    if (config.lastStatus == STATUS_AUTH_ERROR || config.lastStatus == STATUS_CONFIG_ERROR) {
+                        Log.d(TAG, "Skip ${config.name} (${config.lastStatus}) — re-test to resume")
+                        continue
+                    }
                     try {
                         Log.d(TAG, "Polling backend: ${config.name} (${config.baseUrl})")
+                        // Deliver any status reports queued while offline/restarts first.
+                        SmsSender.flushPendingStatuses(this, config)
                         val api = ApiClient.forConfig(config)
                         val pending = api.getPending(limit = 10)
                         val now = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
@@ -110,6 +118,27 @@ class SmsForegroundService : Service() {
                             prefs.setBackendStatus(config.id, "ok")
                         }
                         anySuccess = true
+                    } catch (e: HttpException) {
+                        // HTTP-aware: auth/config errors are NOT transient — stop
+                        // hammering this backend until the user re-tests it.
+                        when (e.code()) {
+                            401, 403 -> {
+                                Log.e(TAG, "Auth failed backend ${config.name} (${e.code()}) — pausing backend")
+                                LogStore.add("! ${config.name}: token rejected (${e.code()}) — check token, then Test")
+                                prefs.setBackendStatus(config.id, STATUS_AUTH_ERROR)
+                            }
+                            404 -> {
+                                Log.e(TAG, "Not found backend ${config.name} — pausing backend")
+                                LogStore.add("! ${config.name}: 404 — check Base URL, then Test")
+                                prefs.setBackendStatus(config.id, STATUS_CONFIG_ERROR)
+                            }
+                            else -> {
+                                Log.e(TAG, "HTTP ${e.code()} backend ${config.name}: ${e.message}")
+                                LogStore.add("Server error ${config.name}: HTTP ${e.code()}")
+                                prefs.setBackendStatus(config.id, "fail")
+                            }
+                        }
+                        // don't block other backends — continue
                     } catch (e: IOException) {
                         Log.e(TAG, "Network error backend ${config.name}: ${e.message}")
                         LogStore.add("Network error ${config.name}: ${e.message}")
@@ -196,14 +225,37 @@ class SmsForegroundService : Service() {
         return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        // Swipe-away kills the process on many OEMs — try to come back if ON.
+        try {
+            if (Prefs.getInstance(this).isServiceEnabled()) {
+                Log.d(TAG, "Task removed — restarting (service is ON)")
+                start(this)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Task-removed restart failed: ${e.message}")
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         isRunning = false
         pollingJob?.cancel()
         scope.cancel()
         try {
-            WorkManager.getInstance(this).cancelUniqueWork(WORK_NAME)
-            Log.d(TAG, "WorkManager cancelled on destroy")
+            if (!Prefs.getInstance(this).isServiceEnabled()) {
+                // Explicit user stop: take the fallback down too.
+                WorkManager.getInstance(this).cancelUniqueWork(WORK_NAME)
+                Log.d(TAG, "WorkManager cancelled (user stop)")
+            } else {
+                // System kill / crash: keep the fallback alive so polling resumes.
+                val work = PeriodicWorkRequestBuilder<SmsPollWorker>(15, TimeUnit.MINUTES).build()
+                WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                    WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, work
+                )
+                Log.d(TAG, "WorkManager kept (system kill, service is ON)")
+            }
         } catch (_: Exception) {}
         Log.d(TAG, "Service onDestroy")
     }
@@ -216,6 +268,10 @@ class SmsForegroundService : Service() {
         const val NOTIF_ID = 1001
         const val WORK_NAME = "sms_poll_fallback"
         const val ACTION_STOP = "STOP_SERVICE"
+        /** Backend paused: token rejected — resume via Test/Edit. */
+        const val STATUS_AUTH_ERROR = "auth-error"
+        /** Backend paused: bad URL/path — resume via Test/Edit. */
+        const val STATUS_CONFIG_ERROR = "config-error"
 
         @Volatile
         var isRunning: Boolean = false
