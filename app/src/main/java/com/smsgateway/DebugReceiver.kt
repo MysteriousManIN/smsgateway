@@ -12,9 +12,9 @@ class DebugReceiver : BroadcastReceiver() {
             "com.smsgateway.ADD_DUMMY" -> {
                 val prefs = Prefs.getInstance(context)
                 prefs.saveBackends(emptyList())
-                prefs.addBackend(BackendConfig(name = "ERP1", baseUrl = "https://erp1.example.com", token = "dummy_token_erp1_12345", enabled = true))
-                prefs.addBackend(BackendConfig(name = "ERP2", baseUrl = "https://erp2.example.com", token = "dummy_token_erp2_67890", enabled = true))
-                LogStore.add("Added dummy gateways ERP1/ERP2 via DebugReceiver")
+                prefs.addBackend(BackendConfig(name = "Backend 1", baseUrl = "https://backend1.example.com", token = "dummy_token_backend1_12345", enabled = true))
+                prefs.addBackend(BackendConfig(name = "Backend 2", baseUrl = "https://backend2.example.com", token = "dummy_token_backend2_67890", enabled = true))
+                LogStore.add("Added dummy gateways Backend 1/Backend 2 via DebugReceiver")
                 Log.d("SmsGateway", "Added dummy gateways")
             }
             "com.smsgateway.CLEAR_GATEWAYS" -> {

@@ -26,7 +26,7 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Name (e.g. ERP 1)"
+        android:hint="Name (e.g. Primary Backend)"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         app:boxStrokeColor="@color/border"
         app:hintTextColor="@color/text_muted"
@@ -49,7 +49,7 @@
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         app:boxStrokeColor="@color/border"
         app:hintTextColor="@color/text_muted"
-        app:placeholderText="https://erp1.example.com"
+        app:placeholderText="https://backend1.example.com"
         android:layout_marginBottom="8dp">
 
         <com.google.android.material.textfield.TextInputEditText

@@ -19,8 +19,8 @@ class App : Application() {
             val prefs = Prefs.getInstance(this)
             if (prefs.getBackends().isEmpty()) {
                 // keep for demo; comment out to start empty
-                // prefs.addBackend(BackendConfig(name = "ERP1", baseUrl = "https://erp1.example.com", token = "dummy_token_erp1_12345"))
-                // prefs.addBackend(BackendConfig(name = "ERP2", baseUrl = "https://erp2.example.com", token = "dummy_token_erp2_67890"))
+                // prefs.addBackend(BackendConfig(name = "Backend 1", baseUrl = "https://backend1.example.com", token = "dummy_token_backend1_12345"))
+                // prefs.addBackend(BackendConfig(name = "Backend 2", baseUrl = "https://backend2.example.com", token = "dummy_token_backend2_67890"))
                 Log.d("SmsGateway", "No gateways yet — ready to add via UI")
             }
         } catch (e: Exception) {

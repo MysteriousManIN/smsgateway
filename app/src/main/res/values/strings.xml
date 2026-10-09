@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Sandesh</string>
-    <string name="hint_backend_url">Backend URL (https://erp.example.com)</string>
+    <string name="hint_backend_url">Backend URL (https://backend.example.com)</string>
     <string name="hint_gateway_token">Gateway Token</string>
     <string name="btn_save">Save</string>
     <string name="btn_start_service">Start Service</string>

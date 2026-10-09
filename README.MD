@@ -1,6 +1,10 @@
-# smsgateway — Complete Documentation & API Reference
+# Sandesh — Android SMS Gateway
 
-Lightweight Android SMS Gateway for automated SMS dispatch via mobile SIM. Phone polls backend every 15s, sends SMS via device SIM using `SmsManager`, and reports delivery status back to backend. Supports multi-backend setup — one phone can serve multiple ERPs or applications simultaneously.
+Lightweight Android SMS gateway that sends SMS automatically through the phone's SIM card. The phone polls your backend every 15 seconds, dispatches pending messages via `SmsManager`, and reports delivery status back. One phone can serve multiple backends (ERPs / applications) at the same time.
+
+- **App name:** Sandesh
+- **Application ID:** `com.sandesh.app`
+- **minSdk 24 · targetSdk 34 · Kotlin · Material 3**
 
 ---
 
@@ -8,14 +12,14 @@ Lightweight Android SMS Gateway for automated SMS dispatch via mobile SIM. Phone
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                          Backend / ERP System                          │
+│                      Backend / Application Server                      │
 │                                                                        │
-│   ERP Service ───► POST /api/v1/sms/send ───► [ sms_queue (pending) ]  │
+│ Backend Service ─► POST /api/v1/sms/send ───► [ sms_queue (pending) ]  │
 │                                                          ▲             │
 │   Audit UI    ◄─── GET /api/v1/sms/logs  ────────────────┤             │
 └──────────────────────────────────────────────────────────┼─────────────┘
                                                            │ HTTPS
-                                                           │ (Poll every 15s)
+                                                           │ (poll every 15s)
 ┌──────────────────────────────────────────────────────────┼─────────────┐
 │                      Android Phone                       │             │
 │                                                          ▼             │
@@ -29,104 +33,93 @@ Lightweight Android SMS Gateway for automated SMS dispatch via mobile SIM. Phone
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Flow Summary:
-1. **Enqueue:** ERP / Backend calls `POST /api/v1/sms/send` to insert message with status `pending` into `sms_queue`.
-2. **Poll:** Android phone foreground service polls `GET /api/v1/sms/pending?limit=10` every 15s for each enabled gateway.
-3. **Dispatch:** Phone sends message via SIM card using `SmsManager` (auto-handles multipart if message > 160 GSM chars).
-4. **Status Update:** Phone posts delivery result (`sent`, `failed`, or `delivered`) back to backend via `POST /api/v1/sms/status`.
-5. **Audit:** ERP queries `GET /api/v1/sms/logs` to view delivery logs and history.
+### Flow summary
+
+1. **Enqueue:** Your backend server calls `POST /api/v1/sms/send` to insert a message with status `pending` into `sms_queue`.
+2. **Poll:** The phone's foreground service polls `GET /api/v1/sms/pending?limit=10` every 15 seconds for each enabled gateway.
+3. **Dispatch:** The phone sends the message via SIM using `SmsManager` (multipart is handled automatically for messages over 160 GSM characters).
+4. **Status update:** The phone posts the result (`sent`, `failed`, or `delivered`) to `POST /api/v1/sms/status`.
+5. **Audit:** Query `GET /api/v1/sms/logs` to review delivery history.
 
 ---
 
-## 2. Android App Setup & Usage Guide (Kaise use kare)
+## 2. Android App Setup & Usage
 
-### Gateway Add / Edit / Test Flow
+### Gateway configuration (Gateways tab)
 
-Har ERP / Backend ke liye Gateways tab me ek gateway card configure kar sakte ho.
+Configure one gateway card per backend / application:
 
 | Field | Example | Description |
 |---|---|---|
-| **Name** | `School-ERP` / `Production-Gateway` | Friendly label for backend |
-| **Base URL** | `https://api.yourdomain.com/api/v1/sms/` | Backend endpoint base URL (`https://` required, trailing `/` optional) |
-| **Token** | `SMS_GATEWAY_TOKEN_SECRET` | Backend shared secret Bearer token |
+| **Name** | `Primary-Backend` | Friendly label for the backend |
+| **Base URL** | `https://api.yourdomain.com/api/v1/sms/` | Backend base URL (`https://` required, trailing `/` optional) |
+| **Token** | `SMS_GATEWAY_TOKEN_SECRET` | Shared secret Bearer token |
 
-#### Step-by-Step Setup:
+### Step-by-step setup
 
-1. **Add Gateway:** Gateways tab pe jao → `+` button tap karo → Name, Base URL (`https://...`), aur Token enter karo → **Save**.
-2. **Toggle ON:** Gateway card pe toggle switch **ON** karo → polling enable ho jayegi us backend ke liye.
-3. **Test Gateway:** Tap **Test** button → App `GET /api/v1/sms/pending?limit=10` call karegi with `Authorization: Bearer <TOKEN>` header.
-   - Success: `✓ pending: N` toast show hoga.
-   - Error: `401 token invalid`, `429 rate limit`, ya network error display hoga.
-4. **Grant Permissions:**
-   - **SEND_SMS**: Required for sending SMS via SIM.
-   - **POST_NOTIFICATIONS** (Android 13+): Required for foreground service persistent notification.
-5. **Start Service:**
-   - Home tab pe jao → **Start Service** tap karo.
-   - Notification `smsgateway active` show hogi → Foreground service starts polling every 15s per enabled gateway.
-6. **Disable Battery Optimization (Crucial):**
-   - Prompt aane pe Battery Optimization disable karo (Settings → Battery → Unrestricted / No restrictions).
-   - Xiaomi / Oppo / Vivo / Realme devices me **Auto-start** allow karo aur background restrictions hatao taaki Android OS background service kill na kare.
+1. **Add a gateway:** Open the Gateways tab → tap `Add` → enter Name, Base URL (`https://…`), and Token → **Save**.
+2. **Enable it:** Turn the toggle **ON** on the gateway card to enable polling for that backend.
+3. **Test it:** Tap **Test** — the app calls `GET /pending?limit=10` with `Authorization: Bearer <TOKEN>`.
+   - Success: `✓ pending: N`
+   - Error: `401 token invalid`, `429 rate limit`, or a network error.
+4. **Grant permissions** (asked automatically on first launch):
+   - **SMS** — required to send messages via SIM. If permanently denied, the app routes you to App Settings.
+   - **Notifications** (Android 13+) — required for the foreground-service status notification.
+   - **Phone** — required only to list SIM cards for manual SIM selection (asked in Settings).
+5. **Select SIM (optional):** Settings → **SIM FOR SENDING** → tap a SIM (or leave **System default**).
+6. **Start the service:** Home tab → **Start Service**. A persistent `Sandesh active` notification appears and polling starts every 15 seconds per enabled gateway.
+7. **Disable battery optimization (important):**
+   - When prompted, allow ignoring battery optimizations (Settings → Battery → Unrestricted).
+   - On Xiaomi / Oppo / Vivo / Realme, also allow **Auto-start** and remove background restrictions so the OS does not kill the service.
 
-#### Gateway Management Actions:
-- **Add:** Floating `+` button se naya gateway create karein.
-- **Edit:** Pencil icon tap karke URL ya token update karein.
-- **Delete:** Trash icon tap karke confirmation ke baad gateway remove karein.
-- **Toggle (ON/OFF):** Har backend independent hai — agar ek backend down ho to dusre backends ki polling affect nahi hoti.
+### Service ON/OFF behavior
 
----
+The service switch state is persisted:
 
-## 3. Authentication & Security Requirements
+- **OFF stays OFF** — after a reboot or app update, the service does **not** auto-start.
+- **ON restores ON** — after a reboot, `BootReceiver` restarts polling automatically (WorkManager runs a 15-minute fallback in case the foreground start is blocked).
 
-All requests between Android App and Backend must adhere to the following standards:
+### Gateway management
 
-### 1. Transport Security
-- **Strict HTTPS Required:** All endpoints must be served over `https://`. Insecure `http://` URLs are rejected by the Android client for security.
-
-### 2. Request Headers Format
-Every request must include the Bearer authentication token and JSON content type:
-
-```http
-Authorization: Bearer <TOKEN>
-Content-Type: application/json
-```
-
-### 3. Rate Limiting & Recommendations
-- Recommended backend rate limit: `60 req/min` per token.
-- On rate limit breach, return HTTP `429 Too Many Requests` with `{ "error": "Too Many Requests", "retryAfter": 60 }`.
-- Phone number validation: E.164 digits without `+` sign (`10-15` digits, regex: `^[0-9]{10,15}$`, e.g., `919876543210`).
+- **Add:** floating `Add` button creates a new gateway.
+- **Edit:** pencil icon updates URL or token.
+- **Delete:** trash icon removes the gateway after confirmation.
+- **Toggle (ON/OFF):** each backend is independent — if one backend is down, polling for the others is unaffected.
 
 ---
 
-## 4. Backend API Documentation
+## 3. Authentication & Security
 
-Backend ko 4 REST endpoints implement karne hote hain:
-
-1. `GET /api/v1/sms/pending` — Phone polls pending messages
-2. `POST /api/v1/sms/status` — Phone reports delivery status
-3. `POST /api/v1/sms/send` — ERP / Server enqueues message
-4. `GET /api/v1/sms/logs` — ERP queries SMS logs & audit history
+- **Strict HTTPS required.** `http://` URLs are rejected by the client.
+- **Headers** on every request:
+  ```http
+  Authorization: Bearer <TOKEN>
+  Content-Type: application/json
+  ```
+- **Rate limiting (recommended backend default):** `60 req/min` per token. On breach return `429 Too Many Requests`.
+- **Phone numbers:** E.164 digits without `+` (10–15 digits, `^[0-9]{10,15}$`, e.g. `919876543210`).
+- Tokens are stored in `EncryptedSharedPreferences`. If the encrypted store is ever corrupted (e.g. after a backup restore), the app wipes it once and recreates it instead of crash-looping. Encrypted prefs are excluded from cloud backup and device transfer for this reason.
 
 ---
+
+## 4. Backend API Reference
+
+Your backend must implement 4 REST endpoints:
+
+1. `GET /api/v1/sms/pending` — polled by the phone
+2. `POST /api/v1/sms/status` — delivery reports from the phone
+3. `POST /api/v1/sms/send` — enqueue (called by your backend server)
+4. `GET /api/v1/sms/logs` — audit history (called by dashboards)
 
 ### 4.1 GET /api/v1/sms/pending
 
-Phone har 15 second me ye endpoint call karta hai to fetch pending SMS messages to send.
+Called by the phone every 15 seconds per enabled gateway.
 
-- **Method:** `GET`
-- **Path:** `/api/v1/sms/pending`
-- **Caller:** Android Phone (Foreground Service)
+- **Headers:** `Authorization: Bearer <SMS_GATEWAY_TOKEN>`
+- **Query:** `limit` (integer, default `10`, max `50`)
 
-#### Headers:
-```http
-Authorization: Bearer <SMS_GATEWAY_TOKEN>
-```
+Response `200 OK`:
 
-#### Query Parameters:
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `limit` | integer | `10` | Maximum number of pending messages to return (max `50`). |
-
-#### Response (200 OK):
 ```json
 {
   "messages": [
@@ -136,132 +129,52 @@ Authorization: Bearer <SMS_GATEWAY_TOKEN>
       "message": "Your OTP verification code is 482913. Valid for 10 mins.",
       "templateId": "DLT-OTP-01",
       "created_at": "2026-09-19T10:00:00.000Z"
-    },
-    {
-      "id": "d9b21e93-849b-5e35-92fc-098925c8f231",
-      "to": "919876543211",
-      "message": "Dear Parent, school fees of Rs. 4,500 is due on 25th Sept.",
-      "templateId": null,
-      "created_at": "2026-09-19T10:00:05.000Z"
     }
   ]
 }
 ```
 
-*When no messages are pending:*
-```json
-{
-  "messages": []
-}
-```
+Empty queue: `{ "messages": [] }`
 
-#### Response Fields:
-| Field | Type | Description |
-|---|---|---|
-| `messages` | array | List of pending SMS objects |
-| `messages[].id` | string | Unique message ID (UUID or String) |
-| `messages[].to` | string | Destination phone number (10–15 digits) |
-| `messages[].message` | string | SMS body text |
-| `messages[].templateId` | string \| null | Optional DLT template ID |
-| `messages[].created_at` | string \| null | ISO timestamp of creation |
-
-#### cURL Example:
 ```bash
 curl -X GET "https://api.yourdomain.com/api/v1/sms/pending?limit=10" \
   -H "Authorization: Bearer YOUR_SMS_GATEWAY_TOKEN"
 ```
 
----
-
 ### 4.2 POST /api/v1/sms/status
 
-Jab phone SMS send kar leta hai ya delivery fail hoti hai, tab phone status report karne ke liye ye endpoint call karta hai.
+Called by the phone after each send attempt.
 
-- **Method:** `POST`
-- **Path:** `/api/v1/sms/status`
-- **Caller:** Android Phone (SmsSender callback / receivers)
+- **Headers:** `Authorization: Bearer <SMS_GATEWAY_TOKEN>`, `Content-Type: application/json`
+- **Body:**
 
-#### Headers:
-```http
-Authorization: Bearer <SMS_GATEWAY_TOKEN>
-Content-Type: application/json
-```
-
-#### Request Body Schema:
 ```json
-{
-  "id": "c7a10f82-938a-4d24-81eb-987814b7e120",
-  "status": "sent",
-  "error": null
-}
+{ "id": "c7a10f82-938a-4d24-81eb-987814b7e120", "status": "sent", "error": null }
 ```
 
-#### Request Body Fields:
-| Field | Type | Required | Description / Values |
-|---|---|---|---|
-| `id` | string | Yes | Message ID reported |
-| `status` | string | Yes | One of: `sent`, `failed`, `delivered` |
-| `error` | string \| null | No | Error details if status is `failed` (e.g. `RESULT_ERROR_NO_SERVICE`, `RESULT_ERROR_RADIO_OFF`, `SecurityException: Permission denied`) |
+| Field | Required | Values |
+|---|---|---|
+| `id` | Yes | Message ID |
+| `status` | Yes | `sent` / `failed` / `delivered` |
+| `error` | No | e.g. `RESULT_ERROR_NO_SERVICE`, `SecurityException: Permission denied` |
 
-#### Status Definitions:
-- `sent`: SMS handover to cellular carrier successful (`SmsManager` RESULT_OK).
-- `failed`: SMS send failed (carrier error, SIM out of balance, no network, or timeout).
-- `delivered`: Delivery confirmation received from telecom provider (best-effort carrier receipt).
+- `sent` — handed over to the carrier (`SmsManager` RESULT_OK).
+- `failed` — carrier error, no network, empty balance, or timeout.
+- `delivered` — carrier delivery receipt (best effort).
 
-#### Response (200 OK):
-```json
-{
-  "ok": true
-}
-```
+Response `200 OK`: `{ "ok": true }`. Errors: `400` invalid body, `401` bad token, `404` unknown ID.
 
-#### Error Responses:
-- `400 Bad Request`: Invalid status value or missing ID (`{ "error": "Invalid status or ID" }`).
-- `401 Unauthorized`: Token missing or invalid.
-- `404 Not Found`: Message ID not found in database.
-
-#### cURL Examples:
-
-*Mark as Sent:*
 ```bash
 curl -X POST "https://api.yourdomain.com/api/v1/sms/status" \
   -H "Authorization: Bearer YOUR_SMS_GATEWAY_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{
-    "id": "c7a10f82-938a-4d24-81eb-987814b7e120",
-    "status": "sent"
-  }'
+  -d '{ "id": "c7a10f82-938a-4d24-81eb-987814b7e120", "status": "sent" }'
 ```
-
-*Mark as Failed:*
-```bash
-curl -X POST "https://api.yourdomain.com/api/v1/sms/status" \
-  -H "Authorization: Bearer YOUR_SMS_GATEWAY_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "c7a10f82-938a-4d24-81eb-987814b7e120",
-    "status": "failed",
-    "error": "RESULT_ERROR_NO_SERVICE"
-  }'
-```
-
----
 
 ### 4.3 POST /api/v1/sms/send
 
-ERP ya application server naya SMS queue karne ke liye is endpoint ko call karta hai. *(Note: Phone is endpoint ko call nahi karta, ye aapka server call karta hai).*
+Called by your backend server to queue a message. (The phone never calls this.)
 
-- **Method:** `POST`
-- **Path:** `/api/v1/sms/send`
-- **Caller:** ERP Server / Application Backend
-
-#### Headers:
-```http
-Authorization: Bearer <SMS_GATEWAY_TOKEN>
-Content-Type: application/json
-```
-
-#### Request Body Schema:
 ```json
 {
   "to": "919876543210",
@@ -271,15 +184,15 @@ Content-Type: application/json
 }
 ```
 
-#### Request Body Fields:
-| Field | Type | Required | Default | Validation & Notes |
-|---|---|---|---|---|
-| `to` | string | Yes | — | Recipient mobile number without `+` (10–15 numeric digits: `^[0-9]{10,15}$`). |
-| `message` | string | Yes | — | SMS text body (1–1000 characters). GSM-7 and Unicode / UCS-2 auto-handled. |
-| `templateId` | string | No | `null` | Optional DLT Template ID (for Indian telecom compliance). |
-| `priority` | string | No | `"normal"` | Priority queue level: `"normal"` or `"high"`. |
+| Field | Required | Default | Validation |
+|---|---|---|---|
+| `to` | Yes | — | `^[0-9]{10,15}$` |
+| `message` | Yes | — | 1–1000 chars (GSM-7 / Unicode auto-handled) |
+| `templateId` | No | `null` | DLT template ID (India telecom compliance) |
+| `priority` | No | `"normal"` | `"normal"` or `"high"` |
 
-#### Response (201 Created / 200 OK):
+Response `201 Created`:
+
 ```json
 {
   "id": "c7a10f82-938a-4d24-81eb-987814b7e120",
@@ -289,42 +202,14 @@ Content-Type: application/json
 }
 ```
 
-#### cURL Example:
-```bash
-curl -X POST "https://api.yourdomain.com/api/v1/sms/send" \
-  -H "Authorization: Bearer YOUR_SMS_GATEWAY_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "to": "919876543210",
-    "message": "Dear Student, your exam schedule is published on portal.",
-    "templateId": "DLT_NOTIF_02",
-    "priority": "normal"
-  }'
-```
-
----
-
 ### 4.4 GET /api/v1/sms/logs
 
-ERP admin panel ya audit system ke liye delivery logs aur history fetch karne ka endpoint.
+For admin panels / audit dashboards.
 
-- **Method:** `GET`
-- **Path:** `/api/v1/sms/logs`
-- **Caller:** ERP Admin Panel / Dashboard
+- **Query:** `status` (`pending|sent|failed|delivered`), `page` (default `1`), `limit` (default `20`, max `100`)
 
-#### Headers:
-```http
-Authorization: Bearer <SMS_GATEWAY_TOKEN>
-```
+Response `200 OK`:
 
-#### Query Parameters:
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `status` | string | (all) | Filter by status: `pending`, `sent`, `failed`, `delivered` |
-| `page` | integer | `1` | Page number (1-based index) |
-| `limit` | integer | `20` | Items per page (default 20, max 100) |
-
-#### Response (200 OK):
 ```json
 {
   "data": [
@@ -336,15 +221,6 @@ Authorization: Bearer <SMS_GATEWAY_TOKEN>
       "error": null,
       "created_at": "2026-09-19T10:00:00.000Z",
       "updated_at": "2026-09-19T10:00:15.000Z"
-    },
-    {
-      "id": "e8f32a04-123c-4d56-87ef-789012abcdef",
-      "to": "919876543212",
-      "message": "Fee payment reminder.",
-      "status": "failed",
-      "error": "RESULT_ERROR_NO_SERVICE",
-      "created_at": "2026-09-19T09:45:00.000Z",
-      "updated_at": "2026-09-19T09:45:20.000Z"
     }
   ],
   "total": 142,
@@ -353,23 +229,15 @@ Authorization: Bearer <SMS_GATEWAY_TOKEN>
 }
 ```
 
-#### cURL Example:
-```bash
-curl -X GET "https://api.yourdomain.com/api/v1/sms/logs?status=sent&page=1&limit=20" \
-  -H "Authorization: Bearer YOUR_SMS_GATEWAY_TOKEN"
-```
-
 ---
 
-## 5. Database Schema — `sms_queue` Table
+## 5. Database Schema — `sms_queue`
 
-Production PostgreSQL / Supabase table definition for queuing and logging SMS:
+Production PostgreSQL / Supabase definition:
 
 ```sql
--- Enable UUID extension if not present
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- 1. Create sms_queue Table
 CREATE TABLE IF NOT EXISTS sms_queue (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   recipient     VARCHAR(15) NOT NULL CHECK (recipient ~ '^[0-9]{10,15}$'),
@@ -388,21 +256,17 @@ CREATE TABLE IF NOT EXISTS sms_queue (
   delivered_at  TIMESTAMPTZ
 );
 
--- 2. Indexes for fast polling & querying
--- Partial index: GET /pending executes in <1ms even with millions of past rows
+-- Fast polling: GET /pending stays <1ms even with millions of history rows
 CREATE INDEX IF NOT EXISTS idx_sms_queue_pending_poll
   ON sms_queue (created_at ASC)
   WHERE status = 'pending';
 
--- Index for logs sorting & pagination
 CREATE INDEX IF NOT EXISTS idx_sms_queue_created_at
   ON sms_queue (created_at DESC);
 
--- Index for searching logs by recipient number
 CREATE INDEX IF NOT EXISTS idx_sms_queue_recipient
   ON sms_queue (recipient);
 
--- 3. Trigger to auto-update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_sms_queue_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -423,45 +287,65 @@ CREATE TRIGGER trg_sms_queue_updated
   EXECUTE FUNCTION update_sms_queue_timestamp();
 ```
 
-### Table Column Details:
-
-| Column | Type | Description |
-|---|---|---|
-| `id` | `UUID` | Unique identifier generated for each SMS |
-| `recipient` | `VARCHAR(15)` | Mobile number (10–15 digits without `+`) |
-| `message` | `TEXT` | Message text content (1–1000 characters) |
-| `template_id` | `VARCHAR(64)` | Optional DLT registration template ID |
-| `status` | `VARCHAR(16)` | `pending` → `sent` / `failed` → `delivered` |
-| `error` | `TEXT` | Failure error message if send fails |
-| `priority` | `VARCHAR(8)` | `normal` (standard) or `high` (for instant OTPs) |
-| `meta` | `JSONB` | Additional JSON metadata (e.g. `{ "studentId": "...", "type": "otp" }`) |
-| `retry_count` | `SMALLINT` | Number of times retried |
-| `created_at` | `TIMESTAMPTZ` | Timestamp when SMS was enqueued |
-| `updated_at` | `TIMESTAMPTZ` | Timestamp of latest state change |
-| `sent_at` | `TIMESTAMPTZ` | Timestamp when marked as `sent` |
-| `delivered_at` | `TIMESTAMPTZ` | Timestamp when marked as `delivered` |
-
 ---
 
-## 6. Environment Configuration
+## 6. Build
 
-Backend `.env` variables configuration:
+Requirements: JDK 17, Android SDK (API 35), Gradle wrapper included.
 
-```env
-# Shared secret for Android Gateway & ERP
-SMS_GATEWAY_TOKEN=openssl_generated_random_token_32_bytes_hex
-
-# Polling Interval & Limits
-SMS_POLL_INTERVAL_MS=15000
-SMS_GATEWAY_RATE_LIMIT_MAX=60
+```bash
+./build-debug-apk.sh    # debug APK  → Sandesh-debug.apk (fast, no minify)
+./build-apk.sh          # release APK → Sandesh-release.apk (minified)
 ```
 
+The release build is currently signed with the debug keystore (see `signingConfigs` in `app/build.gradle.kts`) — fine for sideloading and testing, **not for Play Store**. Use a real keystore before any store release.
+
 ---
 
-## 7. Production Tips & Troubleshooting
+## 7. Permissions
 
-1. **Keep Phone Charged & Connected:** Use a dedicated Android phone connected to continuous power and Wi-Fi / 4G.
-2. **SIM Card Plan:** Use an unlimited SMS mobile plan pack (~100 SMS/day on standard plans, or bulk enterprise SIM packs).
-3. **Dual-SIM:** Ensure the active SIM with the SMS plan is set as the default SMS SIM under Android Settings → Network & Internet → SIMs → SMS Preference.
-4. **Idempotency:** When handling `POST /status`, ignore duplicate updates for already finalized records.
-5. **No Public IP needed on phone:** Since the phone acts as an HTTP client polling the server over HTTPS, it works seamlessly behind CGNAT, mobile data, or home Wi-Fi without port forwarding or VPNs.
+| Permission | Why |
+|---|---|
+| `SEND_SMS` | Send SMS via SIM (core function) |
+| `POST_NOTIFICATIONS` | Foreground-service status notification (Android 13+) |
+| `READ_PHONE_STATE` | List SIM cards for manual SIM selection |
+| `RECEIVE_BOOT_COMPLETED` | Restore polling after reboot (only if service was ON) |
+| `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` | Prompt to exempt the app from Doze |
+| `INTERNET` / `ACCESS_NETWORK_STATE` / `WAKE_LOCK` / `FOREGROUND_SERVICE*` | Networking + foreground service |
+
+---
+
+## 8. Production Tips & Troubleshooting
+
+1. **Dedicated phone:** keep it on continuous power with Wi-Fi / 4G.
+2. **SIM plan:** standard plans allow ~100 SMS/day; use bulk/enterprise packs for volume.
+3. **Dual SIM:** set the SMS-plan SIM as the Android default SMS SIM, or pick it explicitly in Settings → SIM FOR SENDING.
+4. **App closes instantly on launch:** update to the latest build — older encrypted storage is auto-recovered on first start (gateways must be re-added once).
+5. **`Activity ... does not exist` in Android Studio:** Run **File → Sync Project with Gradle Files**, then **Build → Clean Project**, then Run again.
+6. **`Device is already activating`:** stop the previous Run (red ■ button) and Run again.
+7. **No public IP needed on the phone:** it only makes outbound HTTPS calls, so CGNAT / mobile data / home Wi-Fi all work without port forwarding or VPN.
+
+---
+
+## 9. Project Structure
+
+```
+android-sms-gateway/
+├── app/src/main/java/com/smsgateway/
+│   ├── MainActivity.kt          # drawer + tabs, permissions, network banner
+│   ├── HomeFragment.kt          # stats + service start/stop
+│   ├── GatewaysFragment.kt      # gateway CRUD + connection test
+│   ├── LogsFragment.kt          # in-memory log viewer (last 50)
+│   ├── SettingsFragment.kt      # service switch, SIM picker, battery, theme
+│   ├── SmsForegroundService.kt  # 15s polling loop, persistent notification
+│   ├── SmsPollWorker.kt         # WorkManager 15-min fallback
+│   ├── SmsSender.kt             # SmsManager + sent/delivered receivers
+│   ├── ApiClient.kt             # per-gateway Retrofit (Moshi, Bearer auth)
+│   ├── BackendConfig.kt         # gateway model + URL normalization
+│   ├── Prefs.kt                 # encrypted prefs (gateways, SIM, flags)
+│   └── BootReceiver.kt          # reboot restore (respects ON/OFF state)
+├── app/src/main/res/            # monochrome theme, Italiana + DM Sans fonts
+├── build-apk.sh                 # release APK → Sandesh-release.apk
+├── build-debug-apk.sh           # debug APK   → Sandesh-debug.apk
+└── smsgateway-flow.drawio       # working-flow diagram (draw.io)
+```

@@ -7,7 +7,7 @@
         <mxCell id="p1-title" value="SMS Gateway — End-to-End Working Flow" style="text;html=1;fontSize=22;fontStyle=1;fillColor=none;strokeColor=none;" vertex="1" parent="p1-1">
           <mxGeometry x="40" y="20" width="600" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="p1-erp" value="ERP / Backend Service&#10;(enqueue SMS)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EEF2FF;strokeColor=#4F46E5;fontSize=13;" vertex="1" parent="p1-1">
+        <mxCell id="p1-erp" value="Backend / Application Server&#10;(enqueue SMS)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EEF2FF;strokeColor=#4F46E5;fontSize=13;" vertex="1" parent="p1-1">
           <mxGeometry x="40" y="120" width="200" height="90" as="geometry" />
         </mxCell>
         <mxCell id="p1-api" value="Backend REST API&#10;• POST /send&#10;• GET /pending&#10;• POST /status&#10;• GET /logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#B45309;fontSize=12;align=left;spacingLeft=12;" vertex="1" parent="p1-1">
