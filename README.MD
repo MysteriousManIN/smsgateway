@@ -320,6 +320,10 @@ The release build is currently signed with the debug keystore (see `signingConfi
 1. **Dedicated phone:** keep it on continuous power with Wi-Fi / 4G.
 2. **SIM plan:** standard plans allow ~100 SMS/day; use bulk/enterprise packs for volume.
 3. **Dual SIM:** set the SMS-plan SIM as the Android default SMS SIM, or pick it explicitly in Settings → SIM FOR SENDING.
+4. **Android SMS rate limit:** the OS warns/blocks after ~30 SMS per 15 min per app on unattended devices. For bulk deployments raise it via adb:
+   ```bat
+   adb shell settings put global sms_outgoing_check_max_count 10000
+   ```
 4. **App closes instantly on launch:** update to the latest build — older encrypted storage is auto-recovered on first start (gateways must be re-added once).
 5. **`Activity ... does not exist` in Android Studio:** Run **File → Sync Project with Gradle Files**, then **Build → Clean Project**, then Run again.
 6. **`Device is already activating`:** stop the previous Run (red ■ button) and Run again.

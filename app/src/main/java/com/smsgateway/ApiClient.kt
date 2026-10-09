@@ -34,6 +34,13 @@ data class StatusRequest(
     val error: String? = null
 )
 
+/** A status report pinned to the backend it belongs to (outbox entry). */
+@JsonClass(generateAdapter = true)
+data class QueuedStatus(
+    val backendId: String,
+    val req: StatusRequest
+)
+
 @JsonClass(generateAdapter = true)
 data class StatusResponse(
     val ok: Boolean = true
@@ -97,6 +104,22 @@ interface SmsApi {
  * // ponytail: no DI/Hilt — simple map cache
  */
 object ApiClient {
+    /**
+     * Debug logger that masks PII/secrets inside JSON bodies
+     * (recipients, message text, tokens) before they reach logcat.
+     */
+    private object RedactingLogger : HttpLoggingInterceptor.Logger {
+        private val messageField = Regex("\"message\"\\s*:\\s*\"[^\"]*\"")
+        private val tokenField = Regex("\"token\"\\s*:\\s*\"[^\"]*\"")
+        private val toField = Regex("\"to\"\\s*:\\s*\"(\\d{3})[^\"]*\"")
+        override fun log(message: String) {
+            var out = message.replace(messageField, "\"message\":\"***\"")
+            out = out.replace(tokenField, "\"token\":\"***\"")
+            out = out.replace(toField, "\"to\":\"$1***\"")
+            android.util.Log.d("SmsApi", out)
+        }
+    }
+
     private val cache = mutableMapOf<String, SmsApi>()
     /** Last known baseUrl+token per gateway id — rebuild entry only on change. */
     private val fingerprints = mutableMapOf<String, String>()
@@ -131,9 +154,9 @@ object ApiClient {
                 .writeTimeout(15, TimeUnit.SECONDS)
                 .addInterceptor(authInterceptor)
             if (BuildConfig.DEBUG) {
-                val logging = HttpLoggingInterceptor().apply {
+                val logging = HttpLoggingInterceptor(RedactingLogger).apply {
                     level = HttpLoggingInterceptor.Level.BODY
-                    // Never print bearer tokens / message bodies to logcat.
+                    // Never print bearer tokens to logcat (bodies are redacted too).
                     redactHeader("Authorization")
                 }
                 builder.addInterceptor(logging)
@@ -175,7 +198,7 @@ object ApiClient {
             val builder = OkHttpClient.Builder()
                 .connectTimeout(10, TimeUnit.SECONDS).readTimeout(15, TimeUnit.SECONDS).writeTimeout(15, TimeUnit.SECONDS)
                 .addInterceptor(authInterceptor)
-            if (BuildConfig.DEBUG) builder.addInterceptor(HttpLoggingInterceptor().apply {
+            if (BuildConfig.DEBUG) builder.addInterceptor(HttpLoggingInterceptor(RedactingLogger).apply {
                 level = HttpLoggingInterceptor.Level.BODY
                 redactHeader("Authorization")
             })

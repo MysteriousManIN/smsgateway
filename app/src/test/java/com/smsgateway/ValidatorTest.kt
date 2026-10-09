@@ -52,20 +52,15 @@ class ValidatorTest {
 
     @Test
     fun backendUrlNormalization() {
-        assertEquals(
-            "https://api.example.com/api/v1/sms/",
-            BackendConfig(name = "t", baseUrl = "https://api.example.com", token = "x").normalizedBaseUrl()
-        )
-        assertEquals(
-            "https://api.example.com/api/v1/sms/",
-            BackendConfig(name = "t", baseUrl = "https://api.example.com/", token = "x").normalizedBaseUrl()
-        )
-        assertEquals(
-            "https://api.example.com/api/v1/sms/",
-            BackendConfig(name = "t", baseUrl = "https://api.example.com/api/v1/sms", token = "x").normalizedBaseUrl()
-        )
-        assertNull(
-            BackendConfig(name = "t", baseUrl = "http://api.example.com", token = "x").normalizedBaseUrl()
-        )
+        fun norm(url: String) =
+            BackendConfig(name = "t", baseUrl = url, token = "x").normalizedBaseUrl()
+        assertEquals("https://api.example.com/api/v1/sms/", norm("https://api.example.com"))
+        assertEquals("https://api.example.com/api/v1/sms/", norm("https://api.example.com/"))
+        assertEquals("https://api.example.com/api/v1/sms/", norm("https://api.example.com/api/v1/sms"))
+        // custom API versions are respected, not double-appended
+        assertEquals("https://api.example.com/api/v2/sms/", norm("https://api.example.com/api/v2/sms"))
+        // pasted operation suffix is trimmed
+        assertEquals("https://api.example.com/api/v1/sms/", norm("https://api.example.com/api/v1/sms/pending"))
+        assertNull(norm("http://api.example.com"))
     }
 }

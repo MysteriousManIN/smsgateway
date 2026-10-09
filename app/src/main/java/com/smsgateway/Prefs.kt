@@ -215,35 +215,49 @@ class Prefs private constructor(context: Context) {
     }
 
     // ---------- Pending status outbox (postStatus retry across restarts) ----------
+    // Entries are scoped per backend id — flushing backend A must never post
+    // backend B's message IDs to A's /status endpoint (tenant pollution).
 
-    private val statusListType = Types.newParameterizedType(List::class.java, StatusRequest::class.java)
-    private val statusListAdapter = moshi.adapter<List<StatusRequest>>(statusListType)
+    private val queuedStatusListType =
+        Types.newParameterizedType(List::class.java, QueuedStatus::class.java)
+    private val queuedStatusListAdapter = moshi.adapter<List<QueuedStatus>>(queuedStatusListType)
 
     /** Queue a status report that failed to reach the backend (deduped by id). */
     @Synchronized
-    fun queuePendingStatus(req: StatusRequest) {
+    fun queuePendingStatus(backendId: String, req: StatusRequest) {
         try {
-            val current = readPendingStatuses()
-            val updated = (current.filterNot { it.id == req.id } + req).takeLast(MAX_PENDING_STATUS)
-            prefs.edit().putString(KEY_PENDING_STATUS, statusListAdapter.toJson(updated)).apply()
+            val current = readQueuedStatuses()
+                .filterNot { it.backendId == backendId && it.req.id == req.id }
+            val updated = (current + QueuedStatus(backendId, req)).takeLast(MAX_PENDING_STATUS)
+            prefs.edit().putString(KEY_PENDING_STATUS, queuedStatusListAdapter.toJson(updated)).apply()
         } catch (_: Exception) {}
     }
 
-    /** Drain the outbox (returns items and clears storage). */
+    /** Peek (without deleting) this backend's queued reports. */
     @Synchronized
-    fun takePendingStatuses(): List<StatusRequest> {
+    fun peekPendingStatuses(backendId: String): List<StatusRequest> {
         return try {
-            val current = readPendingStatuses()
-            prefs.edit().remove(KEY_PENDING_STATUS).apply()
-            current
+            readQueuedStatuses()
+                .filter { it.backendId == backendId }
+                .map { it.req }
         } catch (_: Exception) {
             emptyList()
         }
     }
 
-    private fun readPendingStatuses(): List<StatusRequest> {
+    /** Delete ONE report — only after the backend confirmed it (HTTP 2xx). */
+    @Synchronized
+    fun removePendingStatus(backendId: String, id: String) {
+        try {
+            val updated = readQueuedStatuses()
+                .filterNot { it.backendId == backendId && it.req.id == id }
+            prefs.edit().putString(KEY_PENDING_STATUS, queuedStatusListAdapter.toJson(updated)).apply()
+        } catch (_: Exception) {}
+    }
+
+    private fun readQueuedStatuses(): List<QueuedStatus> {
         return try {
-            statusListAdapter.fromJson(prefs.getString(KEY_PENDING_STATUS, null) ?: "[]") ?: emptyList()
+            queuedStatusListAdapter.fromJson(prefs.getString(KEY_PENDING_STATUS, null) ?: "[]") ?: emptyList()
         } catch (_: Exception) {
             emptyList()
         }

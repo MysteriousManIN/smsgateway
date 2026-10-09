@@ -13,8 +13,8 @@
         <item name="android:statusBarColor">@color/bg_light</item>
         <item name="android:navigationBarColor">@color/bg_light</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowLightNavigationBar">false</item>
-        <item name="android:forceDarkAllowed">false</item>
+        <!-- windowLightNavigationBar (v27+) and forceDarkAllowed (v29+)
+             live in values-night-v27 / values-night-v29 overlays (minSdk 24) -->
         <item name="android:fontFamily">@font/dm_sans</item>
         <item name="fontFamily">@font/dm_sans</item>
         <!-- monochrome editorial — Italiana display, DM Sans body -->

@@ -6,14 +6,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.google.android.material.button.MaterialButton
 
 class HomeFragment : Fragment() {
 
@@ -22,18 +19,9 @@ class HomeFragment : Fragment() {
     private lateinit var tvSent: TextView
     private lateinit var tvFailed: TextView
     private lateinit var tvGatewaysCount: TextView
-
-    // legacy hidden refs kept for compat
-    private var tvServiceStatus: TextView? = null
-    private var tvLastPoll: TextView? = null
-    private var tvWelcomeSub: TextView? = null
-    private var tvGatewayCountActive: TextView? = null
-    private var tvActivitySub: TextView? = null
-    private var tvPollInfo: TextView? = null
-    private var chipRow: LinearLayout? = null
-    private var spinnerGateways: Spinner? = null
-    private var etTestPhone: com.google.android.material.textfield.TextInputEditText? = null
-    private var etTestMessage: com.google.android.material.textfield.TextInputEditText? = null
+    private lateinit var tvServiceStatus: TextView
+    private lateinit var tvLastPoll: TextView
+    private lateinit var btnToggleService: MaterialButton
 
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
     private val refreshRunnable = object : Runnable {
@@ -53,32 +41,20 @@ class HomeFragment : Fragment() {
         tvSent = view.findViewById(R.id.tvSent)
         tvFailed = view.findViewById(R.id.tvFailed)
         tvGatewaysCount = view.findViewById(R.id.tvGatewaysCount)
-
-        // legacy views
         tvServiceStatus = view.findViewById(R.id.tvServiceStatus)
         tvLastPoll = view.findViewById(R.id.tvLastPoll)
-        tvWelcomeSub = view.findViewById(R.id.tvWelcomeSub)
-        tvGatewayCountActive = view.findViewById(R.id.tvGatewayCountActive)
-        tvActivitySub = view.findViewById(R.id.tvActivitySub)
-        tvPollInfo = view.findViewById(R.id.tvPollInfo)
-        chipRow = view.findViewById(R.id.chipRow)
-        spinnerGateways = view.findViewById(R.id.spinnerGateways)
-        etTestPhone = view.findViewById(R.id.etTestPhone)
-        etTestMessage = view.findViewById(R.id.etTestMessage)
+        btnToggleService = view.findViewById(R.id.btnToggleService)
 
-        view.findViewById<View>(R.id.btnToggleService)?.setOnClickListener { toggleService() }
+        btnToggleService.setOnClickListener { toggleService() }
         view.findViewById<View>(R.id.btnBattery)?.setOnClickListener { (activity as? MainActivity)?.requestBatteryExemption() }
-        view.findViewById<View>(R.id.btnTestSend)?.setOnClickListener { doTestSend(view) }
 
         refreshStats()
-        setupSpinner()
     }
 
     override fun onResume() {
         super.onResume()
         handler.post(refreshRunnable)
         refreshStats()
-        setupSpinner()
     }
 
     override fun onPause() {
@@ -88,32 +64,18 @@ class HomeFragment : Fragment() {
 
     private fun refreshStats() {
         val running = SmsForegroundService.isRunning
-        tvServiceStatus?.let {
-            it.text = if (running) getString(R.string.status_service_running) else getString(R.string.status_service_stopped)
-        }
-        tvLastPoll?.text = "Last: ${prefs.lastPoll ?: "—"}"
+        tvServiceStatus.text = if (running) getString(R.string.status_service_running) else getString(R.string.status_service_stopped)
+        tvLastPoll.text = "Last: ${prefs.lastPoll ?: "—"}"
+        btnToggleService.text = if (running) getString(R.string.btn_stop_service) else getString(R.string.btn_start_service)
         tvPending.text = "—"
         tvSent.text = prefs.sentCount.toString()
         tvFailed.text = prefs.failedCount.toString()
 
-        val backends = prefs.getBackends()
-        val enabled = backends.filter { it.enabled }
-        tvWelcomeSub?.text = "${backends.size} gateways • ${enabled.size} active • polling 15s"
+        val enabled = prefs.getEnabledBackends()
         tvGatewaysCount.text = enabled.size.toString()
-        tvGatewayCountActive?.text = enabled.size.toString()
         view?.findViewById<TextView>(R.id.tvGatewaysSub)?.let {
             it.text = "active"
         }
-        tvActivitySub?.text = "Failed: ${prefs.failedCount} • Sent: ${prefs.sentCount}"
-        tvPollInfo?.text = "poll 15s"
-    }
-
-    private fun setupSpinner() {
-        val spinner = spinnerGateways ?: return
-        val backends = prefs.getBackends()
-        val names = if (backends.isEmpty()) listOf("No gateways — add one") else backends.map { "${it.name} (${if (it.enabled) "on" else "off"})" }
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, names)
-        spinner.adapter = adapter
     }
 
     private fun toggleService() {
@@ -138,70 +100,5 @@ class HomeFragment : Fragment() {
             Toast.makeText(requireContext(), "Service starting…", Toast.LENGTH_SHORT).show()
         }
         handler.postDelayed({ refreshStats() }, 800)
-    }
-
-    private fun doTestSend(root: View) {
-        val spinner = spinnerGateways
-        val phoneView = etTestPhone
-        val msgView = etTestMessage
-        if (spinner == null || phoneView == null || msgView == null) return
-        if (!prefs.isConfigured() && prefs.getBackends().isEmpty()) {
-            Snackbar.make(root, "Add a gateway first", Snackbar.LENGTH_LONG).show()
-            (activity as? MainActivity)?.navigateToGateways()
-            return
-        }
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(requireContext(), getString(R.string.msg_grant_sms_first), Toast.LENGTH_LONG).show()
-            (activity as? MainActivity)?.checkPermissions()
-            return
-        }
-        val backends = prefs.getBackends()
-        if (backends.isEmpty()) {
-            Snackbar.make(root, "No gateways configured", Snackbar.LENGTH_LONG).show()
-            return
-        }
-        // Spinner was built from an older snapshot (add/delete re-renders it) —
-        // never apply a stale position to a fresh list.
-        if (spinner.count != backends.size) {
-            setupSpinner()
-            Snackbar.make(root, "Gateway list changed — please retry", Snackbar.LENGTH_SHORT).show()
-            return
-        }
-        val idx = spinner.selectedItemPosition.coerceIn(0, backends.size - 1)
-        val config = backends[idx]
-        if (!config.enabled) {
-            Snackbar.make(root, "${config.name} is disabled — enable first", Snackbar.LENGTH_LONG).show()
-            return
-        }
-        val rawPhone = phoneView.text?.toString() ?: ""
-        val phone = SmsValidator.normalizePhone(rawPhone)
-        if (phone == null) {
-            phoneView.error = "Enter digits, e.g. 919876543210"
-            return
-        }
-        val msg = msgView.text?.toString()?.trim() ?: ""
-        if (!SmsValidator.isValidMessage(msg)) {
-            msgView.error = "Enter message (1–1000 chars)"
-            return
-        }
-        val parts = SmsValidator.partCountEstimate(msg)
-        if (parts > 1) {
-            Toast.makeText(requireContext(), "Message will go as $parts parts", Toast.LENGTH_SHORT).show()
-        }
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val api = ApiClient.forConfig(config)
-                val resp = api.sendSms(SendRequest(to = phone, message = msg))
-                LogStore.add("Test enqueued via ${config.name} id=${resp.id} to $phone")
-                withContext(Dispatchers.Main) {
-                    Snackbar.make(root, "Enqueued via ${config.name}: ${resp.id}", Snackbar.LENGTH_LONG).show()
-                }
-            } catch (e: Exception) {
-                LogStore.add("Test send failed ${config.name}: ${e.message}")
-                withContext(Dispatchers.Main) {
-                    Snackbar.make(root, "Test failed ${config.name}: ${e.message}", Snackbar.LENGTH_LONG).show()
-                }
-            }
-        }
     }
 }

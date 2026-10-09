@@ -45,15 +45,17 @@ object SmsSender {
     private val senderScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val requestCodeSeq = AtomicInteger(100_000)
     private val pendingSends = ConcurrentHashMap<String, PendingSend>()
+    /** Delivery receivers outlive the sent-aggregation (carrier receipts arrive
+     * minutes later) — tracked separately with their own timeout. */
+    private val pendingDelivered = ConcurrentHashMap<String, BroadcastReceiver>()
+    private const val DELIVERED_TIMEOUT_MS = 10 * 60_000L
 
     private class PendingSend(
         val remaining: AtomicInteger,
         val failed: AtomicBoolean = AtomicBoolean(false),
         @Volatile var firstError: String? = null,
         @Volatile var sentReceiver: BroadcastReceiver? = null,
-        @Volatile var deliveredReceiver: BroadcastReceiver? = null,
-        @Volatile var timeout: Runnable? = null,
-        val deliveredReported: AtomicBoolean = AtomicBoolean(false)
+        @Volatile var timeout: Runnable? = null
     )
 
     /**
@@ -62,6 +64,17 @@ object SmsSender {
      */
     private fun pickSmsManager(context: Context): SmsManager {
         val subId = try { Prefs.getInstance(context).simSubscriptionId } catch (_: Exception) { -1 }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val base = context.getSystemService(SmsManager::class.java) ?: SmsManager.getDefault()
+            if (subId < 0) return base
+            return try {
+                base.createForSubscriptionId(subId)
+            } catch (_: Exception) {
+                Log.w(TAG, "Selected SIM subId=$subId unavailable — using default")
+                LogStore.add("! Selected SIM unavailable — sent via system default SIM")
+                base
+            }
+        }
         if (subId >= 0) {
             try {
                 return SmsManager.getSmsManagerForSubscriptionId(subId)
@@ -70,12 +83,8 @@ object SmsSender {
                 LogStore.add("! Selected SIM unavailable — sent via system default SIM")
             }
         }
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            context.getSystemService(SmsManager::class.java) ?: SmsManager.getDefault()
-        } else {
-            @Suppress("DEPRECATION")
-            SmsManager.getDefault()
-        }
+        @Suppress("DEPRECATION")
+        return SmsManager.getDefault()
     }
 
     private fun resolveApi(appContext: Context, config: BackendConfig?): SmsApi? = try {
@@ -147,27 +156,36 @@ object SmsSender {
                     }
                 }
             }
+            // Delivery receipts arrive seconds/minutes AFTER the sent callbacks,
+            // when pendingSends[msg.id] is already gone — so this receiver reads
+            // nothing from that map and cleans itself up (plus a 10-min timeout).
             val deliveredReceiver = object : BroadcastReceiver() {
                 override fun onReceive(c: Context?, intent: Intent?) {
                     if (resultCode != Activity.RESULT_OK) return
-                    val st = pendingSends[msg.id] ?: return
-                    if (!st.deliveredReported.compareAndSet(false, true)) return
+                    if (!pendingDelivered.containsKey(msg.id)) return
+                    pendingDelivered.remove(msg.id)
                     Log.d(TAG, "SMS delivered id=${msg.id}")
                     LogStore.add("✓ Delivered to ${msg.to}")
-                    try { appContext.unregisterReceiver(this) } catch (_: Exception) {}
-                    st.deliveredReceiver = null
+                    unregisterQuietly(appContext, this)
                     reportStatus(appContext, resolveApi(appContext, config), config, msg, "delivered", null)
                 }
             }
+            pendingDelivered[msg.id] = deliveredReceiver
+            // Late-receipt failsafe: never leak the delivered receiver.
+            Handler(appContext.mainLooper).postDelayed({
+                val lingering = pendingDelivered.remove(msg.id)
+                if (lingering != null) unregisterQuietly(appContext, lingering)
+            }, DELIVERED_TIMEOUT_MS)
             probe.sentReceiver = sentReceiver
-            probe.deliveredReceiver = deliveredReceiver
 
-            // Timeout failsafe: never leak receivers, never leave a message hanging.
+            // Timeout failsafe: never leak the sent receiver, never leave a
+            // message hanging. (The delivered receiver has its own 10-min
+            // timeout above and stays alive for late carrier receipts.)
             val handler = Handler(appContext.mainLooper)
             val timeout = Runnable {
                 val st = pendingSends.remove(msg.id)
                 if (st != null && st.remaining.get() > 0) {
-                    unregisterQuietly(appContext, st.sentReceiver, st.deliveredReceiver)
+                    unregisterQuietly(appContext, st.sentReceiver)
                     val error = st.firstError ?: "TIMEOUT_NO_CARRIER_RESULT"
                     Log.w(TAG, "Send timeout id=${msg.id}")
                     LogStore.add("✗ Timeout sending to ${msg.to}")
@@ -228,18 +246,26 @@ object SmsSender {
                 Log.d(TAG, "sendText to=${msg.to} id=${msg.id} via ${config?.name}")
             }
         } catch (e: SecurityException) {
-            pendingSends.remove(msg.id)
+            abortSend(appContext, msg.id, probe)
             Log.e(TAG, "SecurityException sending SMS: ${e.message}")
             LogStore.add("✗ SecurityException: ${e.message}")
             reportStatus(appContext, statusApi, config, msg, "failed", "SecurityException: ${e.message}")
             Prefs.getInstance(appContext).incrementFailed()
         } catch (e: Exception) {
-            pendingSends.remove(msg.id)
+            abortSend(appContext, msg.id, probe)
             Log.e(TAG, "Exception sending SMS: ${e.message}", e)
             LogStore.add("✗ Exception: ${e.message}")
             reportStatus(appContext, statusApi, config, msg, "failed", e.message)
             Prefs.getInstance(appContext).incrementFailed()
         }
+    }
+
+    /** Unregister everything for a message that died before/without carrier results. */
+    private fun abortSend(appContext: Context, msgId: String, probe: PendingSend) {
+        pendingSends.remove(msgId)
+        try { Handler(appContext.mainLooper).removeCallbacks(probe.timeout ?: return) } catch (_: Exception) {}
+        unregisterQuietly(appContext, probe.sentReceiver)
+        pendingDelivered.remove(msgId)?.let { unregisterQuietly(appContext, it) }
     }
 
     /** Called once all parts of a message have reported. Posts ONE status. */
@@ -287,6 +313,7 @@ object SmsSender {
         error: String?
     ) {
         val req = StatusRequest(msg.id, status, error)
+        val backendId = config?.id
         senderScope.launch {
             var ok = postWithRetry(api, req)
             var liveApi = api
@@ -299,10 +326,14 @@ object SmsSender {
             if (ok) {
                 prefs.markAcked(msg.id)
                 Log.d(TAG, "POST status $status for ${msg.id} via ${config?.name}")
-            } else {
-                prefs.queuePendingStatus(req)
+            } else if (backendId != null) {
+                // Kept on disk, scoped to THIS backend — flushed on next poll
+                // of the same backend, deleted only after HTTP success.
+                prefs.queuePendingStatus(backendId, req)
                 LogStore.add("! status '$status' queued for ${msg.to} — will retry")
                 Log.e(TAG, "postStatus failed id=${msg.id} — queued")
+            } else {
+                Log.e(TAG, "postStatus failed id=${msg.id} — no backend to queue for")
             }
         }
     }
@@ -327,11 +358,13 @@ object SmsSender {
     /**
      * Flush queued status reports for one backend. Called at the start of
      * every poll pass (service + worker) so reports survive process death.
+     * Only this backend's entries are touched; each entry is deleted only
+     * after the backend confirms it — a kill mid-flush loses nothing.
      */
     fun flushPendingStatuses(context: Context, config: BackendConfig) {
         val appContext = context.applicationContext
         val prefs = Prefs.getInstance(appContext)
-        val queued = prefs.takePendingStatuses()
+        val queued = prefs.peekPendingStatuses(config.id)
         if (queued.isEmpty()) return
         Log.d(TAG, "Flushing ${queued.size} queued statuses via ${config.name}")
         senderScope.launch {
@@ -339,9 +372,9 @@ object SmsSender {
             for (req in queued) {
                 if (postWithRetry(api, req)) {
                     prefs.markAcked(req.id)
-                } else {
-                    prefs.queuePendingStatus(req)
+                    prefs.removePendingStatus(config.id, req.id)
                 }
+                // else: stays on disk for the next pass
             }
         }
     }

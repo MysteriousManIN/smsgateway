@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- API 29+: additionally opt out of force-dark (minSdk 24 safe) -->
     <style name="Theme.SmsGateway" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/primary</item>
         <item name="colorOnPrimary">@color/white</item>
@@ -11,11 +12,10 @@
         <item name="android:windowBackground">@color/bg_light</item>
         <item name="android:statusBarColor">@color/bg_light</item>
         <item name="android:navigationBarColor">@color/bg_light</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <!-- windowLightNavigationBar (v27+) and forceDarkAllowed (v29+)
-             live in values-v27 / values-v29 overlays (minSdk 24) -->
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:forceDarkAllowed">false</item>
         <item name="android:fontFamily">@font/dm_sans</item>
         <item name="fontFamily">@font/dm_sans</item>
-        <!-- monochrome editorial — Italiana display, DM Sans body -->
     </style>
 </resources>

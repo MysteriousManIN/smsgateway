@@ -119,7 +119,7 @@
                 app:useMaterialThemeColors="false" />
         </LinearLayout>
 
-        <!-- Buttons row: Edit / Delete (Test removed from card) -->
+        <!-- Buttons row: Test / Edit / Delete -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -127,10 +127,24 @@
             android:layout_marginTop="14dp">
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTest"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_weight="1"
+                android:text="Test"
+                android:textSize="11sp"
+                android:textColor="@color/text_dark"
+                app:strokeColor="@color/border"
+                android:fontFamily="@font/dm_sans"
+                app:cornerRadius="0dp" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnEdit"
                 android:layout_width="0dp"
                 android:layout_height="36dp"
                 android:layout_weight="1"
+                android:layout_marginStart="8dp"
                 android:text="Edit"
                 android:textSize="11sp"
                 android:textColor="@color/white"

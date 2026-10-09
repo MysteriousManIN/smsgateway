@@ -17,7 +17,19 @@ data class BackendConfig(
     fun normalizedBaseUrl(): String? {
         if (!baseUrl.startsWith("https://")) return null
         var url = baseUrl.trim().trimEnd('/')
-        if (!url.contains("/api/v1/sms")) url += "/api/v1/sms"
+        // Accept any existing API path (e.g. /api/v1/sms, /api/v2/sms):
+        // only append the default when no /api/ segment is present yet.
+        if (url.contains("/api/")) {
+            // Drop a pasted operation suffix (.../pending|status|send|logs).
+            for (op in listOf("/pending", "/status", "/send", "/logs")) {
+                if (url.endsWith(op)) {
+                    url = url.removeSuffix(op)
+                    break
+                }
+            }
+        } else {
+            url += "/api/v1/sms"
+        }
         if (!url.endsWith("/")) url += "/"
         return url
     }

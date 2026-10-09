@@ -43,8 +43,16 @@ class SmsPollWorker(
                 val pending = api.getPending(limit = 10)
                 Log.d("SmsGateway", "Worker: ${config.name} fetched ${pending.messages.size} pending")
                 for (msg in pending.messages) {
+                    val normalizedTo = SmsValidator.normalizePhone(msg.to)
+                    if (normalizedTo == null || !SmsValidator.isValidMessage(msg.message)) {
+                        Log.w("SmsGateway", "Worker skip invalid message id=${msg.id}")
+                        try {
+                            api.postStatus(StatusRequest(msg.id, "failed", "Invalid phone format or message body"))
+                        } catch (_: Exception) {}
+                        continue
+                    }
                     try {
-                        SmsSender.send(ctx, msg, config)
+                        SmsSender.send(ctx, msg.copy(to = normalizedTo), config)
                     } catch (e: Exception) {
                         Log.e("SmsGateway", "Worker send failed ${config.name} ${msg.id}: ${e.message}")
                         try { api.postStatus(StatusRequest(msg.id, "failed", e.message)) } catch (_: Exception) {}

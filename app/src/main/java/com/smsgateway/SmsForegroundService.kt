@@ -7,6 +7,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -68,6 +69,14 @@ class SmsForegroundService : Service() {
         val prefs = Prefs.getInstance(this)
         Log.d(TAG, "Polling loop started — 15s interval, multi-backend")
         while (currentCoroutineContext().isActive) {
+            // Doze/deep-sleep would freeze delay() timers: hold a short
+            // PARTIAL_WAKE_LOCK per pass (auto-released by timeout — no leak).
+            try {
+                val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+                pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Sandesh:poll").apply {
+                    acquire(60_000L)
+                }
+            } catch (_: Exception) {}
             try {
                 val enabled = prefs.getEnabledBackends()
                 if (enabled.isEmpty()) {
@@ -112,7 +121,21 @@ class SmsForegroundService : Service() {
                             LogStore.add("Poll ${config.name} $now — ${pending.messages.size} pending")
                             totalPending += pending.messages.size
                             for (msg in pending.messages) {
-                                SmsSender.send(this, msg, config)
+                                val normalizedTo = SmsValidator.normalizePhone(msg.to)
+                                if (normalizedTo == null || !SmsValidator.isValidMessage(msg.message)) {
+                                    Log.w(TAG, "Skip invalid message id=${msg.id} to='${msg.to}'")
+                                    LogStore.add("! Skip invalid message to '${msg.to}'")
+                                    try {
+                                        api.postStatus(
+                                            StatusRequest(
+                                                msg.id, "failed",
+                                                "Invalid phone format or message body"
+                                            )
+                                        )
+                                    } catch (_: Exception) {}
+                                    continue
+                                }
+                                SmsSender.send(this, msg.copy(to = normalizedTo), config)
                                 delay(500)
                             }
                             prefs.setBackendStatus(config.id, "ok")
@@ -228,13 +251,23 @@ class SmsForegroundService : Service() {
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
         // Swipe-away kills the process on many OEMs — try to come back if ON.
+        // On Android 12+ a background FGS start throws
+        // ForegroundServiceStartNotAllowedException: fall back to WorkManager.
         try {
             if (Prefs.getInstance(this).isServiceEnabled()) {
                 Log.d(TAG, "Task removed — restarting (service is ON)")
                 start(this)
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Task-removed restart failed: ${e.message}")
+            val isBlocked = e.javaClass.simpleName == "ForegroundServiceStartNotAllowedException" ||
+                (e.message ?: "").contains("NotAllowed", ignoreCase = true)
+            Log.e(TAG, "Task-removed restart ${if (isBlocked) "blocked by OS" else "failed"}: ${e.message} — keeping WorkManager fallback")
+            try {
+                val work = PeriodicWorkRequestBuilder<SmsPollWorker>(15, TimeUnit.MINUTES).build()
+                WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                    WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, work
+                )
+            } catch (_: Exception) {}
         }
     }
 

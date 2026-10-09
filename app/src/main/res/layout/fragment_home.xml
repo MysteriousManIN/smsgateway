@@ -305,48 +305,5 @@
             android:fontFamily="@font/dm_sans"
             app:cornerRadius="0dp" />
 
-        <!-- Legacy hidden views for code compat -->
-        <TextView
-            android:id="@+id/tvWelcomeSub"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
-        <TextView
-            android:id="@+id/tvGatewayCountActive"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
-        <LinearLayout
-            android:id="@+id/chipRow"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone"
-            android:orientation="horizontal" />
-        <Spinner
-            android:id="@+id/spinnerGateways"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etTestPhone"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etTestMessage"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnTestSend"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
-        <ProgressBar
-            android:id="@+id/progressService"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
-
     </LinearLayout>
 </ScrollView>

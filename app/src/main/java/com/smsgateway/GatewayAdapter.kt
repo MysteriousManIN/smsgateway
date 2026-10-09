@@ -73,6 +73,7 @@ class GatewayAdapter(
         }
 
         // ponytail: Test Send removed from card — only Connection remains
+        holder.btnTest.setOnClickListener { onTest(c) }
         holder.btnEdit.setOnClickListener { onEdit(c) }
         holder.btnDelete.setOnClickListener { onDelete(c) }
         holder.btnClearLogs.setOnClickListener { onClearLogs(c) }
@@ -89,6 +90,7 @@ class GatewayAdapter(
         val dot: View = view.findViewById(R.id.dotStatus)
         val leftBar: View = view.findViewById(R.id.leftBar)
         val switchEnabled: SwitchMaterial = view.findViewById(R.id.switchEnabled)
+        val btnTest: MaterialButton = view.findViewById(R.id.btnTest)
         val btnEdit: MaterialButton = view.findViewById(R.id.btnEdit)
         val btnDelete: MaterialButton = view.findViewById(R.id.btnDelete)
         val btnClearLogs: MaterialButton = view.findViewById(R.id.btnClearLogs)

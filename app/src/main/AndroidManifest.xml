@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- SEND_SMS implies telephony; keep tablets visible, fail gracefully at runtime -->
+    <uses-feature android:name="android.hardware.telephony" android:required="false" />
+
     <!-- Required per plan §6.5 -->
     <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />

@@ -90,6 +90,8 @@ class MainActivity : AppCompatActivity() {
 
         if (savedInstanceState == null) {
             switchTab(0)
+        } else {
+            switchTab(savedInstanceState.getInt(KEY_TAB, 0))
         }
 
         checkPermissions()
@@ -252,5 +254,14 @@ class MainActivity : AppCompatActivity() {
         networkCallback?.let {
             try { (getSystemService(ConnectivityManager::class.java)).unregisterNetworkCallback(it) } catch (_: Exception) {}
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putInt(KEY_TAB, currentTab)
+    }
+
+    companion object {
+        private const val KEY_TAB = "current_tab"
     }
 }
