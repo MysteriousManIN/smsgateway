@@ -35,6 +35,12 @@ class BootReceiver : BroadcastReceiver() {
                     }
                 } catch (e: Exception) {
                     Log.e("SmsGateway", "Boot start failed: ${e.message}", e)
+                    try {
+                        val work = androidx.work.PeriodicWorkRequestBuilder<SmsPollWorker>(15, java.util.concurrent.TimeUnit.MINUTES).build()
+                        androidx.work.WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                            SmsForegroundService.WORK_NAME, androidx.work.ExistingPeriodicWorkPolicy.KEEP, work
+                        )
+                    } catch (_: Exception) {}
                 }
             } else {
                 Log.d("SmsGateway", "Not configured — skip boot start")

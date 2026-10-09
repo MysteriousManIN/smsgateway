@@ -284,6 +284,7 @@ object SmsSender {
             val error = st.firstError ?: "UNKNOWN"
             LogStore.add("✗ Failed $error to ${msg.to}")
             prefs.incrementFailed()
+            pendingDelivered.remove(msg.id)?.let { unregisterQuietly(appContext, it) }
             reportStatus(appContext, statusApi, config, msg, "failed", error)
         } else {
             // Carrier confirmed all parts: never send this ID again, even if our
