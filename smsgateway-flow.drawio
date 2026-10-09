@@ -1,188 +1,267 @@
-<mxfile host="app.diagrams.net">
-  <diagram name="1 - System End-to-End Flow" id="page-system">
-    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="640" math="0" shadow="0">
-      <root>
-        <mxCell id="p1-0" />
-        <mxCell id="p1-1" parent="p1-0" />
-        <mxCell id="p1-title" value="SMS Gateway — End-to-End Working Flow" style="text;html=1;fontSize=22;fontStyle=1;fillColor=none;strokeColor=none;" vertex="1" parent="p1-1">
-          <mxGeometry x="40" y="20" width="600" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="p1-erp" value="Backend / Application Server&#10;(enqueue SMS)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EEF2FF;strokeColor=#4F46E5;fontSize=13;" vertex="1" parent="p1-1">
-          <mxGeometry x="40" y="120" width="200" height="90" as="geometry" />
-        </mxCell>
-        <mxCell id="p1-api" value="Backend REST API&#10;• POST /send&#10;• GET /pending&#10;• POST /status&#10;• GET /logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#B45309;fontSize=12;align=left;spacingLeft=12;" vertex="1" parent="p1-1">
-          <mxGeometry x="300" y="100" width="230" height="130" as="geometry" />
-        </mxCell>
-        <mxCell id="p1-db" value="sms_queue&#10;(postgres)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontSize=13;" vertex="1" parent="p1-1">
-          <mxGeometry x="590" y="110" width="180" height="110" as="geometry" />
-        </mxCell>
-        <mxCell id="p1-audit" value="Audit UI / Dashboard&#10;(delivery logs)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F4F6FB;strokeColor=#64748B;fontSize=12;" vertex="1" parent="p1-1">
-          <mxGeometry x="40" y="300" width="200" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="p1-phone" value="Android Phone (SIM + App)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F4F6FB;strokeColor=#0F172A;strokeWidth=2;fontSize=14;fontStyle=1;align=left;spacingLeft=16;spacingTop=-380;" vertex="1" parent="p1-1">
-          <mxGeometry x="830" y="60" width="500" height="460" as="geometry" />
-        </mxCell>
-        <mxCell id="p1-fgs" value="SmsForegroundService&#10;poll every 15s per enabled gateway" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EEF2FF;strokeColor=#4F46E5;fontSize=12;" vertex="1" parent="p1-1">
-          <mxGeometry x="860" y="130" width="440" height="70" as="geometry" />
-        </mxCell>
-        <mxCell id="p1-mgr" value="SmsManager.sendTextMessage()&#10;(auto multipart if &gt; 160 chars)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#047857;fontSize=12;" vertex="1" parent="p1-1">
-          <mxGeometry x="860" y="230" width="440" height="70" as="geometry" />
-        </mxCell>
-        <mxCell id="p1-cb" value="Sent / Delivered receivers&#10;→ POST /status (sent, failed, delivered)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFBEB;strokeColor=#B45309;fontSize=12;" vertex="1" parent="p1-1">
-          <mxGeometry x="860" y="330" width="440" height="70" as="geometry" />
-        </mxCell>
-        <mxCell id="p1-note" value="Phone = HTTP client only — no public IP / port forwarding needed (works behind CGNAT, Wi-Fi, mobile data)" style="text;html=1;fontSize=11;fillColor=none;strokeColor=none;fontColor=#64748B;" vertex="1" parent="p1-1">
-          <mxGeometry x="860" y="420" width="440" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="p1-e1" value="POST /send&#10;Bearer token" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0F172A;endArrow=block;fontSize=11;" edge="1" parent="p1-1" source="p1-erp" target="p1-api">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p1-e2" value="insert pending" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0F172A;endArrow=block;fontSize=11;" edge="1" parent="p1-1" source="p1-api" target="p1-db">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p1-e3" value="GET /pending?limit=10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4F46E5;strokeWidth=2;endArrow=block;fontSize=11;" edge="1" parent="p1-1" source="p1-fgs" target="p1-api">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p1-e4" value="dispatch each msg&#10;(500ms gap)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0F172A;endArrow=block;fontSize=11;" edge="1" parent="p1-1" source="p1-fgs" target="p1-mgr">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p1-e5" value="carrier result" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0F172A;endArrow=block;fontSize=11;" edge="1" parent="p1-1" source="p1-mgr" target="p1-cb">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p1-e6" value="POST /status" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#B45309;strokeWidth=2;endArrow=block;fontSize=11;" edge="1" parent="p1-1" source="p1-cb" target="p1-api">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p1-e7" value="GET /logs&#10;(audit)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#64748B;endArrow=block;fontSize=11;dashed=1;" edge="1" parent="p1-1" source="p1-audit" target="p1-api">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-      </root>
-    </mxGraphModel>
-  </diagram>
-  <diagram name="2 - Android App Internal Flow" id="page-app">
-    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1160" pageHeight="880" math="0" shadow="0">
-      <root>
-        <mxCell id="p2-0" />
-        <mxCell id="p2-1" parent="p2-0" />
-        <mxCell id="p2-title" value="Android App — Internal Working Flow" style="text;html=1;fontSize=22;fontStyle=1;fillColor=none;strokeColor=none;" vertex="1" parent="p2-1">
-          <mxGeometry x="40" y="20" width="600" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-app" value="App.kt&#10;(launch + theme)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F4F6FB;strokeColor=#0F172A;fontSize=12;" vertex="1" parent="p2-1">
-          <mxGeometry x="40" y="90" width="190" height="70" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-main" value="MainActivity&#10;(drawer + 4 tabs, permissions,&#10;battery exemption, offline banner)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EEF2FF;strokeColor=#4F46E5;fontSize=12;" vertex="1" parent="p2-1">
-          <mxGeometry x="290" y="80" width="260" height="90" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-prefs" value="Prefs&#10;(EncryptedSharedPreferences)&#10;• backend list&#10;• service_enabled flag&#10;• sent / failed counters" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#B45309;fontSize=12;align=left;spacingLeft=12;" vertex="1" parent="p2-1">
-          <mxGeometry x="830" y="70" width="270" height="130" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-api" value="ApiClient&#10;(Retrofit + Moshi per gateway,&#10;Bearer interceptor)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#B45309;fontSize=12;" vertex="1" parent="p2-1">
-          <mxGeometry x="830" y="230" width="270" height="90" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-home" value="Home&#10;(stats + Start/Stop)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#047857;fontSize=12;" vertex="1" parent="p2-1">
-          <mxGeometry x="40" y="240" width="170" height="70" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-gw" value="Gateways&#10;(add / edit / delete&#10;toggle / test)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#047857;fontSize=12;" vertex="1" parent="p2-1">
-          <mxGeometry x="230" y="240" width="170" height="70" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-logs" value="Logs&#10;(LogStore last 50,&#10;search + clear)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#047857;fontSize=12;" vertex="1" parent="p2-1">
-          <mxGeometry x="420" y="240" width="170" height="70" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-set" value="Settings&#10;(service switch, battery,&#10;theme, polling info)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#047857;fontSize=12;" vertex="1" parent="p2-1">
-          <mxGeometry x="610" y="240" width="170" height="70" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-svc" value="SmsForegroundService&#10;(pollingLoop 15s, backoff 30/60s,&#10;per-gateway isolation)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EEF2FF;strokeColor=#4F46E5;fontSize=12;" vertex="1" parent="p2-1">
-          <mxGeometry x="230" y="390" width="260" height="90" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-worker" value="SmsPollWorker&#10;(WorkManager 15-min&#10;fallback, skips if FGS running&#10;or service OFF)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontSize=12;" vertex="1" parent="p2-1">
-          <mxGeometry x="540" y="390" width="260" height="90" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-boot" value="BootReceiver&#10;(restart only if&#10;serviceEnabled = ON)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF1F2;strokeColor=#E11D48;fontSize=12;" vertex="1" parent="p2-1">
-          <mxGeometry x="830" y="390" width="270" height="90" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-sender" value="SmsSender&#10;(SmsManager + sent/delivered&#10;receivers, error mapping)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#047857;fontSize=12;" vertex="1" parent="p2-1">
-          <mxGeometry x="230" y="550" width="260" height="90" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-sim" value="SIM / Carrier&#10;(sent → delivered&#10;best-effort receipt)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F4F6FB;strokeColor=#64748B;fontSize=12;" vertex="1" parent="p2-1">
-          <mxGeometry x="540" y="550" width="260" height="90" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-done" value="POST /status → LogStore + counters&#10;(sent / failed / delivered)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFBEB;strokeColor=#B45309;fontSize=12;" vertex="1" parent="p2-1">
-          <mxGeometry x="230" y="700" width="570" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-e1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0F172A;endArrow=block;" edge="1" parent="p2-1" source="p2-app" target="p2-main">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-e2" value="hosts" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0F172A;endArrow=block;fontSize=11;" edge="1" parent="p2-1" source="p2-main" target="p2-home">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-e3" value="gateway CRUD" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0F172A;endArrow=block;fontSize=11;" edge="1" parent="p2-1" source="p2-gw" target="p2-prefs">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-e4" value="Start / Stop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4F46E5;strokeWidth=2;endArrow=block;fontSize=11;" edge="1" parent="p2-1" source="p2-home" target="p2-svc">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-e5" value="GET pending" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#B45309;endArrow=block;fontSize=11;dashed=1;" edge="1" parent="p2-1" source="p2-svc" target="p2-api">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-e6" value="GET pending" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#7C3AED;endArrow=block;fontSize=11;dashed=1;" edge="1" parent="p2-1" source="p2-worker" target="p2-api">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-e7" value="send each msg" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0F172A;endArrow=block;fontSize=11;" edge="1" parent="p2-1" source="p2-svc" target="p2-sender">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-e8" value="send each msg" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0F172A;endArrow=block;fontSize=11;" edge="1" parent="p2-1" source="p2-worker" target="p2-sender">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-e9" value="via SIM" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0F172A;endArrow=block;fontSize=11;" edge="1" parent="p2-1" source="p2-sender" target="p2-sim">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-e10" value="report result" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#B45309;strokeWidth=2;endArrow=block;fontSize=11;" edge="1" parent="p2-1" source="p2-sender" target="p2-done">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p2-e11" value="reboot" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#E11D48;endArrow=block;fontSize=11;dashed=1;" edge="1" parent="p2-1" source="p2-boot" target="p2-svc">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-      </root>
-    </mxGraphModel>
-  </diagram>
-  <diagram name="3 - Service ON-OFF Lifecycle" id="page-lifecycle">
-    <mxGraphModel dx="900" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="640" math="0" shadow="0">
-      <root>
-        <mxCell id="p3-0" />
-        <mxCell id="p3-1" parent="p3-0" />
-        <mxCell id="p3-title" value="Service ON / OFF Lifecycle (incl. Reboot)" style="text;html=1;fontSize=22;fontStyle=1;fillColor=none;strokeColor=none;" vertex="1" parent="p3-1">
-          <mxGeometry x="40" y="20" width="600" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="p3-start" value="User toggles Service Controls&#10;(Home / Settings / notification Stop)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F4F6FB;strokeColor=#0F172A;fontSize=12;" vertex="1" parent="p3-1">
-          <mxGeometry x="300" y="90" width="300" height="70" as="geometry" />
-        </mxCell>
-        <mxCell id="p3-decide" value="ON or OFF?" style="shape=rhombus;whiteSpace=wrap;html=1;fillColor=#FFFBEB;strokeColor=#B45309;fontSize=13;" vertex="1" parent="p3-1">
-          <mxGeometry x="350" y="200" width="200" height="120" as="geometry" />
-        </mxCell>
-        <mxCell id="p3-on" value="serviceEnabled = true&#10;FGS starts polling 15s&#10;Worker = standby fallback" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#047857;fontSize=12;" vertex="1" parent="p3-1">
-          <mxGeometry x="80" y="380" width="280" height="90" as="geometry" />
-        </mxCell>
-        <mxCell id="p3-off" value="serviceEnabled = false&#10;FGS stops, Worker cancelled&#10;no polling, no SMS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF1F2;strokeColor=#E11D48;fontSize=12;" vertex="1" parent="p3-1">
-          <mxGeometry x="540" y="380" width="280" height="90" as="geometry" />
-        </mxCell>
-        <mxCell id="p3-reboot" value="Device reboot / update" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F4F6FB;strokeColor=#0F172A;fontSize=12;" vertex="1" parent="p3-1">
-          <mxGeometry x="310" y="510" width="280" height="50" as="geometry" />
-        </mxCell>
-        <mxCell id="p3-e1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0F172A;endArrow=block;" edge="1" parent="p3-1" source="p3-start" target="p3-decide">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p3-e2" value="ON" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#047857;strokeWidth=2;endArrow=block;fontSize=12;" edge="1" parent="p3-1" source="p3-decide" target="p3-on">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p3-e3" value="OFF" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#E11D48;strokeWidth=2;endArrow=block;fontSize=12;" edge="1" parent="p3-1" source="p3-decide" target="p3-off">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p3-e4" value="BootReceiver: flag ON → restart FGS" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#047857;endArrow=block;fontSize=11;" edge="1" parent="p3-1" source="p3-on" target="p3-reboot">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p3-e5" value="BootReceiver: flag OFF → skip, cancel stale Worker" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#E11D48;endArrow=block;fontSize=11;" edge="1" parent="p3-1" source="p3-off" target="p3-reboot">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-      </root>
-    </mxGraphModel>
-  </diagram>
+<mxfile host="65bd71144e">
+    <diagram name="1 - System End-to-End Flow" id="page-system">
+        <mxGraphModel dx="1714" dy="1186" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1480" pageHeight="700" math="0" shadow="0">
+            <root>
+                <mxCell id="p1-0"/>
+                <mxCell id="p1-1" parent="p1-0"/>
+                <mxCell id="p1-title" parent="p1-1" style="text;html=1;fontSize=22;fontStyle=1;fontColor=#0F172A;fillColor=none;strokeColor=none;rounded=0;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="SMS Gateway — End-to-End System Architecture &amp; Flow" vertex="1">
+                    <mxGeometry height="30" width="850" x="40" y="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-subtitle" parent="p1-1" style="text;html=1;fontSize=12;fontColor=#64748B;fillColor=none;strokeColor=none;rounded=0;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="Asynchronous SMS queuing • Polling agent behind NAT/firewall • Radio carrier dispatch • Direct delivery status callback" vertex="1">
+                    <mxGeometry height="20" width="850" x="40" y="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-col1" parent="p1-1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#94A3B8;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=14;spacingTop=10;dashed=1;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:13px;color:#1E293B;&quot;&gt;1. APPLICATION CLIENTS&lt;/b&gt;" vertex="1">
+                    <mxGeometry height="580" width="260" x="40" y="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-erp" parent="p1-1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEF2FF;strokeColor=#4F46E5;strokeWidth=1.5;align=center;verticalAlign=top;spacingTop=8;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:13px;color:#312E81;&quot;&gt;Backend / ERP System&lt;/b&gt;&lt;hr style=&quot;margin:6px 0;border-color:#C7D2FE;&quot;/&gt;&lt;div style=&quot;text-align:left;font-size:11px;color:#374151;line-height:1.4;&quot;&gt;• E-Commerce, Auth, CRM&lt;br/&gt;• Generates OTPs &amp; Alerts&lt;br/&gt;• Sends HTTP JSON payload&lt;br/&gt;• Header: &lt;code&gt;Bearer token&lt;/code&gt;&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="150" width="210" x="65" y="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-audit" parent="p1-1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F1F5F9;strokeColor=#64748B;strokeWidth=1.5;align=center;verticalAlign=top;spacingTop=8;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:13px;color:#0F172A;&quot;&gt;Web Dashboard / Audit UI&lt;/b&gt;&lt;hr style=&quot;margin:6px 0;border-color:#CBD5E1;&quot;/&gt;&lt;div style=&quot;text-align:left;font-size:11px;color:#475569;line-height:1.4;&quot;&gt;• Delivery logs &amp; timestamps&lt;br/&gt;• Queue depth &amp; latency&lt;br/&gt;• Gateway health monitoring&lt;br/&gt;• Failed message inspection&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="150" width="210" x="65" y="440" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-col2" parent="p1-1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#60A5FA;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=14;spacingTop=10;dashed=1;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:13px;color:#1E293B;&quot;&gt;2. CENTRAL GATEWAY SERVER&lt;/b&gt;" vertex="1">
+                    <mxGeometry height="580" width="310" x="340" y="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-api" parent="p1-1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2563EB;strokeWidth=2;align=center;verticalAlign=top;spacingTop=8;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:13px;color:#1E3A8A;&quot;&gt;Gateway REST API Server&lt;/b&gt;&lt;hr style=&quot;margin:6px 0;border-color:#BFDBFE;&quot;/&gt;&lt;div style=&quot;text-align:left;font-size:11px;color:#1E293B;line-height:1.45;&quot;&gt;• &lt;b&gt;POST /send&lt;/b&gt; — Enqueue SMS&lt;br/&gt;• &lt;b&gt;GET /pending?limit=10&lt;/b&gt; — Agent poll&lt;br/&gt;• &lt;b&gt;POST /status&lt;/b&gt; — Delivery reports&lt;br/&gt;• &lt;b&gt;GET /logs&lt;/b&gt; — History &amp; metrics&lt;br/&gt;&lt;span style=&quot;color:#2563EB;&quot;&gt;• Bearer Auth &amp; Rate Limiter&lt;/span&gt;&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="180" width="270" x="360" y="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-db" parent="p1-1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;fillColor=#F5F3FF;strokeColor=#7C3AED;strokeWidth=2;align=center;verticalAlign=top;spacingTop=12;rounded=0;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:13px;color:#5B21B6;&quot;&gt;PostgreSQL Database&lt;/b&gt;&lt;br/&gt;&lt;code style=&quot;font-size:11px;&quot;&gt;table: sms_queue&lt;/code&gt;&lt;hr style=&quot;margin:6px 0;border-color:#DDD6FE;&quot;/&gt;&lt;div style=&quot;text-align:left;font-size:11px;color:#4C1D95;line-height:1.4;&quot;&gt;• Status: &lt;i&gt;pending | sent | delivered | failed&lt;/i&gt;&lt;br/&gt;• Target phone number &amp; text body&lt;br/&gt;• Assigned gateway ID &amp; SIM slot&lt;br/&gt;• ACID transaction locks&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="170" width="240" x="375" y="420" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-col3" parent="p1-1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F0FDF4;strokeColor=#4ADE80;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=14;spacingTop=10;dashed=1;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:13px;color:#1E293B;&quot;&gt;3. ANDROID GATEWAY AGENT (Physical Mobile Device)&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px;color:#475569;font-weight:normal;&quot;&gt;HTTP Client Only • Works behind NAT / Wi-Fi / 4G • No Public IP or Open Inbound Ports required&lt;/span&gt;" vertex="1">
+                    <mxGeometry height="580" width="460" x="690" y="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-fgs" parent="p1-1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#16A34A;strokeWidth=1.5;align=center;verticalAlign=top;spacingTop=6;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:12px;color:#065F46;&quot;&gt;Step 1: SmsForegroundService (Polling Loop)&lt;/b&gt;&lt;hr style=&quot;margin:4px 0;border-color:#A7F3D0;&quot;/&gt;&lt;div style=&quot;text-align:left;font-size:11px;color:#064E3B;line-height:1.35;&quot;&gt;• Polls enabled gateways every 15 seconds via Kotlin Coroutines&lt;br/&gt;• Exponential backoff (30s / 60s) on network disconnection&lt;br/&gt;• Foreground notification keeps process immune to OEM background killers&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="100" width="410" x="715" y="145" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-mgr" parent="p1-1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0D9488;strokeWidth=1.5;align=center;verticalAlign=top;spacingTop=6;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:12px;color:#115E59;&quot;&gt;Step 2: SmsManager &amp; Dual-SIM Dispatcher&lt;/b&gt;&lt;hr style=&quot;margin:4px 0;border-color:#99F6E4;&quot;/&gt;&lt;div style=&quot;text-align:left;font-size:11px;color:#134E4A;line-height:1.35;&quot;&gt;• Routes via designated SIM card (SubscriptionManager slot ID)&lt;br/&gt;• Auto multipart segmentation if text exceeds 160 GSM-7 / 70 UCS-2 chars&lt;br/&gt;• 500ms safety rate pacing between dispatches to prevent carrier blocking&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="100" width="410" x="715" y="285" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-cb" parent="p1-1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D97706;strokeWidth=1.5;align=center;verticalAlign=top;spacingTop=6;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:12px;color:#92400E;&quot;&gt;Step 3: Broadcast Receivers &amp; Status Reporter&lt;/b&gt;&lt;hr style=&quot;margin:4px 0;border-color:#FDE68A;&quot;/&gt;&lt;div style=&quot;text-align:left;font-size:11px;color:#78350F;line-height:1.35;&quot;&gt;• &lt;b&gt;SentReceiver&lt;/b&gt;: Traps RESULT_OK, NO_SERVICE, RADIO_OFF, LIMIT_EXCEEDED&lt;br/&gt;• &lt;b&gt;DeliveredReceiver&lt;/b&gt;: Traps carrier PDU SMS-STATUS-REPORT delivery receipt&lt;br/&gt;• Local offline retry buffer: Persists status in Prefs if connection momentarily drops&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="105" width="410" x="715" y="425" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-col4" parent="p1-1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFBEB;strokeColor=#FCD34D;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=14;spacingTop=10;dashed=1;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:13px;color:#1E293B;&quot;&gt;4. TELECOM &amp; RECIPIENTS&lt;/b&gt;" vertex="1">
+                    <mxGeometry height="580" width="250" x="1190" y="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-sim" parent="p1-1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#EA580C;strokeWidth=1.5;align=center;verticalAlign=top;spacingTop=8;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:13px;color:#9A3412;&quot;&gt;Cellular Network / SIM&lt;/b&gt;&lt;hr style=&quot;margin:6px 0;border-color:#FED7AA;&quot;/&gt;&lt;div style=&quot;text-align:left;font-size:11px;color:#7C2D12;line-height:1.4;&quot;&gt;• GSM / LTE / 5G Tower&lt;br/&gt;• Carrier SMSC routing&lt;br/&gt;• Cellular radio transmission&lt;br/&gt;• Network Delivery Receipt (DLR)&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="130" width="210" x="1210" y="270" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-user" parent="p1-1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#64748B;strokeWidth=1.5;align=center;verticalAlign=top;spacingTop=8;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:13px;color:#1E293B;&quot;&gt;Recipient Handset&lt;/b&gt;&lt;hr style=&quot;margin:6px 0;border-color:#CBD5E1;&quot;/&gt;&lt;div style=&quot;text-align:left;font-size:11px;color:#334155;line-height:1.4;&quot;&gt;• End-user mobile device&lt;br/&gt;• Displays OTP / SMS alert&lt;br/&gt;• Radio firmware sends receipt&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="110" width="210" x="1210" y="440" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-e1" edge="1" parent="p1-1" source="p1-erp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4F46E5;strokeWidth=2;fontSize=11;fontColor=#4F46E5;fontStyle=1;endArrow=block;exitX=1;exitY=0.4;entryX=0;entryY=0.35;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p1-api" value="[1] POST /send&lt;br/&gt;&lt;span style=&quot;font-size:10px;font-weight:normal;&quot;&gt;Bearer token&lt;/span&gt;">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-e2" edge="1" parent="p1-1" source="p1-api" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#7C3AED;strokeWidth=2;fontSize=11;fontColor=#7C3AED;fontStyle=1;startArrow=block;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p1-db" value="[2] Atomic Queue Ops&lt;br/&gt;&lt;span style=&quot;font-size:10px;font-weight:normal;&quot;&gt;INSERT / SELECT / UPDATE&lt;/span&gt;">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-e3" edge="1" parent="p1-1" source="p1-fgs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#16A34A;strokeWidth=2;fontSize=11;fontColor=#16A34A;fontStyle=1;endArrow=block;exitX=0;exitY=0.5;entryX=1;entryY=0.3;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p1-api" value="[3] GET /pending?limit=10&lt;br/&gt;&lt;span style=&quot;font-size:10px;font-weight:normal;&quot;&gt;HTTP Polling (every 15s)&lt;/span&gt;">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-e4" edge="1" parent="p1-1" source="p1-fgs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0D9488;strokeWidth=1.5;fontSize=11;fontColor=#0D9488;fontStyle=1;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p1-mgr" value="[4] Dispatch batch&lt;br/&gt;&lt;span style=&quot;font-size:10px;font-weight:normal;&quot;&gt;500ms safety interval&lt;/span&gt;">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-e5" edge="1" parent="p1-1" source="p1-mgr" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#EA580C;strokeWidth=2;fontSize=11;fontColor=#EA580C;fontStyle=1;endArrow=block;exitX=1;exitY=0.45;entryX=0;entryY=0.4;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p1-sim" value="[5] Radio Send&lt;br/&gt;&lt;span style=&quot;font-size:10px;font-weight:normal;&quot;&gt;via SIM 1 / SIM 2&lt;/span&gt;">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-e6" edge="1" parent="p1-1" source="p1-sim" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#059669;strokeWidth=1.5;fontSize=11;fontColor=#059669;fontStyle=1;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p1-user" value="[6] Cellular Over-the-Air&lt;br/&gt;&lt;span style=&quot;font-size:10px;font-weight:normal;&quot;&gt;SMS Delivery&lt;/span&gt;">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-e7" edge="1" parent="p1-1" source="p1-sim" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D97706;strokeWidth=2;fontSize=11;fontColor=#D97706;fontStyle=1;endArrow=block;exitX=0;exitY=0.8;entryX=1;entryY=0.4;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p1-cb" value="[7] Radio Intents&lt;br/&gt;&lt;span style=&quot;font-size:10px;font-weight:normal;&quot;&gt;Sent &amp; Delivered DLR&lt;/span&gt;">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1-e8" edge="1" parent="p1-1" source="p1-cb" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D97706;strokeWidth=2;fontSize=11;fontColor=#D97706;fontStyle=1;endArrow=block;exitX=0;exitY=0.5;entryX=1;entryY=0.75;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p1-api" value="[8] POST /status&lt;br/&gt;&lt;span style=&quot;font-size:10px;font-weight:normal;&quot;&gt;sent | delivered | failed&lt;/span&gt;">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="670" y="478"/>
+                            <mxPoint x="670" y="275"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="p1-e9" edge="1" parent="p1-1" source="p1-audit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#64748B;strokeWidth=1.5;dashed=1;fontSize=11;fontColor=#64748B;fontStyle=1;endArrow=block;exitX=1;exitY=0.4;entryX=0;entryY=0.75;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p1-api" value="[9] GET /logs&lt;br/&gt;&lt;span style=&quot;font-size:10px;font-weight:normal;&quot;&gt;Audit inspection&lt;/span&gt;">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="320" y="500"/>
+                            <mxPoint x="320" y="275"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+    <diagram name="2 - Android App Internal Flow" id="page-app">
+        <mxGraphModel dx="2228" dy="1542" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1320" pageHeight="880" math="0" shadow="0">
+            <root>
+                <mxCell id="p2-0"/>
+                <mxCell id="p2-1" parent="p2-0"/>
+                <mxCell id="p2-title" parent="p2-1" style="text;html=1;fontSize=22;fontStyle=1;fontColor=#0F172A;fillColor=none;strokeColor=none;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="Android App — Clean Layered Architecture &amp; Component Flow" vertex="1">
+                    <mxGeometry height="30" width="850" x="40" y="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-subtitle" parent="p2-1" style="text;html=1;fontSize=12;fontColor=#64748B;fillColor=none;strokeColor=none;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="Unidirectional data flow • Clear boundary separation: UI → State / Prefs → Background Services → Hardware Dispatcher" vertex="1">
+                    <mxGeometry height="20" width="850" x="40" y="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-tier1" parent="p2-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#94A3B8;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=14;spacingTop=10;dashed=1;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:13px;color:#1E293B;&quot;&gt;LAYER 1: PRESENTATION &amp; USER INTERFACE&lt;/b&gt;" vertex="1">
+                    <mxGeometry height="170" width="1240" x="40" y="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-app" parent="p2-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#64748B;strokeWidth=1.5;fontSize=11;verticalAlign=top;spacingTop=6;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;color:#0F172A;&quot;&gt;App.kt&lt;/b&gt;&lt;hr style=&quot;margin:4px 0;&quot;/&gt;&lt;div style=&quot;font-size:10px;color:#475569;text-align:left;&quot;&gt;• App launch entry&lt;br/&gt;• Dynamic Colors theme&lt;br/&gt;• Notification Channel init&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="105" width="150" x="60" y="125" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-main" parent="p2-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EEF2FF;strokeColor=#3B82F6;strokeWidth=1.5;fontSize=11;verticalAlign=top;spacingTop=6;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;color:#1E40AF;&quot;&gt;MainActivity&lt;/b&gt;&lt;hr style=&quot;margin:4px 0;&quot;/&gt;&lt;div style=&quot;font-size:10px;color:#1E3A8A;text-align:left;&quot;&gt;• Navigation Drawer&lt;br/&gt;• SMS runtime permissions&lt;br/&gt;• Battery exemption prompt&lt;br/&gt;• Offline warning banner&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="105" width="180" x="240" y="125" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-home" parent="p2-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#10B981;strokeWidth=1.5;fontSize=11;verticalAlign=top;spacingTop=6;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;color:#065F46;&quot;&gt;HomeFragment&lt;/b&gt;&lt;hr style=&quot;margin:4px 0;&quot;/&gt;&lt;div style=&quot;font-size:10px;color:#064E3B;text-align:left;&quot;&gt;• Master Service Switch&lt;br/&gt;• Real-time Stats Cards&lt;br/&gt;• Active gateways summary&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="105" width="180" x="450" y="125" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-gw" parent="p2-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#10B981;strokeWidth=1.5;fontSize=11;verticalAlign=top;spacingTop=6;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;color:#065F46;&quot;&gt;GatewaysFragment&lt;/b&gt;&lt;hr style=&quot;margin:4px 0;&quot;/&gt;&lt;div style=&quot;font-size:10px;color:#064E3B;text-align:left;&quot;&gt;• Add/Edit/Delete gateways&lt;br/&gt;• Per-gateway toggle&lt;br/&gt;• &quot;Test Connection&quot; action&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="105" width="180" x="660" y="125" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-logs" parent="p2-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#10B981;strokeWidth=1.5;fontSize=11;verticalAlign=top;spacingTop=6;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;color:#065F46;&quot;&gt;LogsFragment&lt;/b&gt;&lt;hr style=&quot;margin:4px 0;&quot;/&gt;&lt;div style=&quot;font-size:10px;color:#064E3B;text-align:left;&quot;&gt;• Real-time Log RecyclerView&lt;br/&gt;• Search filter &amp; clear&lt;br/&gt;• Sent / Failed tags&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="105" width="180" x="870" y="125" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-set" parent="p2-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#10B981;strokeWidth=1.5;fontSize=11;verticalAlign=top;spacingTop=6;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;color:#065F46;&quot;&gt;SettingsFragment&lt;/b&gt;&lt;hr style=&quot;margin:4px 0;&quot;/&gt;&lt;div style=&quot;font-size:10px;color:#064E3B;text-align:left;&quot;&gt;• Polling frequency config&lt;br/&gt;• SIM preference setting&lt;br/&gt;• Dark / Light Theme picker&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="105" width="180" x="1080" y="125" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-tier2" parent="p2-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFBEB;strokeColor=#FCD34D;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=14;spacingTop=10;dashed=1;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:13px;color:#1E293B;&quot;&gt;LAYER 2: STATE MANAGEMENT &amp; LOCAL PERSISTENCE&lt;/b&gt;" vertex="1">
+                    <mxGeometry height="130" width="1240" x="40" y="270" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-prefs" parent="p2-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D97706;strokeWidth=2;verticalAlign=top;spacingTop=6;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;color:#92400E;font-size:12px;&quot;&gt;Prefs (EncryptedSharedPreferences)&lt;/b&gt;&lt;hr style=&quot;margin:4px 0;&quot;/&gt;&lt;div style=&quot;font-size:11px;color:#78350F;text-align:left;&quot;&gt;• &lt;b&gt;backends&lt;/b&gt;: JSON list of configured gateways (URL, Token, SIM, Enabled)&lt;br/&gt;• &lt;b&gt;service_enabled&lt;/b&gt;: Boolean master state flag&lt;br/&gt;• &lt;b&gt;sent_count&lt;/b&gt; &amp; &lt;b&gt;failed_count&lt;/b&gt;: Persistent transmission counters&lt;br/&gt;• &lt;b&gt;queued_statuses_{id}&lt;/b&gt;: Per-backend offline retry queue for delivery reports&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="80" width="670" x="60" y="305" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-logstore" parent="p2-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D97706;strokeWidth=2;verticalAlign=top;spacingTop=6;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;color:#92400E;font-size:12px;&quot;&gt;LogStore (Circular Memory &amp; Prefs Store)&lt;/b&gt;&lt;hr style=&quot;margin:4px 0;&quot;/&gt;&lt;div style=&quot;font-size:11px;color:#78350F;text-align:left;&quot;&gt;• Thread-safe synchronized buffer of the last 50 gateway events&lt;br/&gt;• Emits updates directly to LogsFragment UI and audit timeline&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="80" width="500" x="760" y="305" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-tier3" parent="p2-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0FDF4;strokeColor=#86EFAC;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=14;spacingTop=10;dashed=1;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:13px;color:#1E293B;&quot;&gt;LAYER 3: BACKGROUND ORCHESTRATION &amp; LIFECYCLE&lt;/b&gt;" vertex="1">
+                    <mxGeometry height="150" width="1240" x="40" y="420" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-svc" parent="p2-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#16A34A;strokeWidth=2;verticalAlign=top;spacingTop=6;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;color:#065F46;font-size:12px;&quot;&gt;SmsForegroundService (Primary Engine)&lt;/b&gt;&lt;hr style=&quot;margin:4px 0;&quot;/&gt;&lt;div style=&quot;font-size:11px;color:#064E3B;text-align:left;&quot;&gt;• Foreground service with persistent status notification&lt;br/&gt;• 15-second coroutine polling ticker per enabled gateway&lt;br/&gt;• Exponential backoff (30s / 60s) on network failures&lt;br/&gt;• Flushes pending offline status callbacks before polling&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="100" width="450" x="60" y="455" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-worker" parent="p2-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;strokeWidth=1.5;verticalAlign=top;spacingTop=6;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;color:#5B21B6;font-size:12px;&quot;&gt;SmsPollWorker (WorkManager Fallback)&lt;/b&gt;&lt;hr style=&quot;margin:4px 0;&quot;/&gt;&lt;div style=&quot;font-size:11px;color:#4C1D95;text-align:left;&quot;&gt;• Periodic 15-minute scheduled fallback job&lt;br/&gt;• Automatically skipped if Foreground Service is alive&lt;br/&gt;• Skips immediately if &lt;code&gt;service_enabled == false&lt;/code&gt;&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="100" width="370" x="540" y="455" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-boot" parent="p2-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E11D48;strokeWidth=1.5;verticalAlign=top;spacingTop=6;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;color:#9F1239;font-size:12px;&quot;&gt;BootReceiver&lt;/b&gt;&lt;hr style=&quot;margin:4px 0;&quot;/&gt;&lt;div style=&quot;font-size:11px;color:#881337;text-align:left;&quot;&gt;• Catches &lt;code&gt;ACTION_BOOT_COMPLETED&lt;/code&gt;&lt;br/&gt;• Reads &lt;code&gt;Prefs.service_enabled&lt;/code&gt;&lt;br/&gt;• Restarts Foreground Service only if ON&lt;br/&gt;• Cancels stale workers if OFF&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="100" width="320" x="940" y="455" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-tier4" parent="p2-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#93C5FD;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=14;spacingTop=10;dashed=1;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:13px;color:#1E293B;&quot;&gt;LAYER 4: NETWORK CLIENT &amp; HARDWARE DISPATCH&lt;/b&gt;" vertex="1">
+                    <mxGeometry height="160" width="1240" x="40" y="590" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-api" parent="p2-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2563EB;strokeWidth=2;verticalAlign=top;spacingTop=6;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;color:#1E40AF;font-size:12px;&quot;&gt;ApiClient (Retrofit + Moshi)&lt;/b&gt;&lt;hr style=&quot;margin:4px 0;&quot;/&gt;&lt;div style=&quot;font-size:11px;color:#1E3A8A;text-align:left;&quot;&gt;• Per-gateway base URL &amp; Bearer token header&lt;br/&gt;• &lt;b&gt;getPending(limit)&lt;/b&gt;: Pulls queued SMS items&lt;br/&gt;• &lt;b&gt;postStatus(report)&lt;/b&gt;: Syncs delivery outcomes&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="105" width="340" x="60" y="625" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-sender" parent="p2-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0D9488;strokeWidth=2;verticalAlign=top;spacingTop=6;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;color:#115E59;font-size:12px;&quot;&gt;SmsSender (Dual-SIM &amp; SmsManager)&lt;/b&gt;&lt;hr style=&quot;margin:4px 0;&quot;/&gt;&lt;div style=&quot;font-size:11px;color:#134E4A;text-align:left;&quot;&gt;• Selects SIM 1 / SIM 2 subscription ID (Android 12+ API 31 safe)&lt;br/&gt;• Auto multipart split &amp; PendingIntent tracking&lt;br/&gt;• Maps carrier errors (NO_SERVICE, RADIO_OFF, LIMIT_EXCEEDED)&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="105" width="430" x="440" y="625" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-cb" parent="p2-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#EA580C;strokeWidth=2;verticalAlign=top;spacingTop=6;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;color:#C2410C;font-size:12px;&quot;&gt;Sent &amp; Delivered Receivers&lt;/b&gt;&lt;hr style=&quot;margin:4px 0;&quot;/&gt;&lt;div style=&quot;font-size:11px;color:#9A3412;text-align:left;&quot;&gt;• SentReceiver: Confirms cellular tower ACK&lt;br/&gt;• DeliveredReceiver: Confirms handset receipt&lt;br/&gt;• Pushes result to LogStore &amp; ApiClient&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="105" width="350" x="910" y="625" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-e1" edge="1" parent="p2-1" source="p2-app" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748B;strokeWidth=1.5;endArrow=block;fontSize=10;exitX=1;exitY=0.5;entryX=0;entryY=0.5;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p2-main" value="launches">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-e2" edge="1" parent="p2-1" source="p2-home" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#D97706;strokeWidth=1.5;endArrow=block;fontSize=10;exitX=0.3;exitY=1;entryX=0.5;entryY=0;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p2-prefs" value="toggles serviceEnabled">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-e3" edge="1" parent="p2-1" source="p2-home" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#16A34A;strokeWidth=2;endArrow=block;fontSize=10;fontColor=#16A34A;fontStyle=1;exitX=0.7;exitY=1;entryX=0.6;entryY=0;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p2-svc" value="startService() / stopService()">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="576" y="245"/>
+                            <mxPoint x="330" y="245"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="p2-e4" edge="1" parent="p2-1" source="p2-gw" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#D97706;strokeWidth=1.5;endArrow=block;fontSize=10;exitX=0.5;exitY=1;entryX=0.8;entryY=0;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p2-prefs" value="CRUD gateway config">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-e5" edge="1" parent="p2-1" source="p2-logs" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748B;strokeWidth=1.5;dashed=1;endArrow=block;fontSize=10;exitX=0.5;exitY=1;entryX=0.5;entryY=0;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p2-logstore" value="observes events">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-e6" edge="1" parent="p2-1" source="p2-svc" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#2563EB;strokeWidth=2;endArrow=block;fontSize=11;fontColor=#2563EB;fontStyle=1;exitX=0.3;exitY=1;entryX=0.5;entryY=0;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p2-api" value="GET /pending">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-e7" edge="1" parent="p2-1" source="p2-svc" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0D9488;strokeWidth=2;endArrow=block;fontSize=11;fontColor=#0D9488;fontStyle=1;exitX=0.75;exitY=1;entryX=0.35;entryY=0;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p2-sender" value="dispatch SMS batch">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-e8" edge="1" parent="p2-1" source="p2-sender" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#EA580C;strokeWidth=1.5;endArrow=block;fontSize=10;exitX=1;exitY=0.5;entryX=0;entryY=0.5;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p2-cb" value="carrier intents">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-e9" edge="1" parent="p2-1" source="p2-cb" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#2563EB;strokeWidth=2;endArrow=block;fontSize=11;fontColor=#2563EB;fontStyle=1;exitX=0.3;exitY=1;entryX=0.8;entryY=1;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p2-api" value="POST /status report">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1015" y="745"/>
+                            <mxPoint x="332" y="745"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="p2-e10" edge="1" parent="p2-1" source="p2-cb" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#D97706;strokeWidth=1.5;endArrow=block;fontSize=10;exitX=0.7;exitY=0;entryX=0.85;entryY=1;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p2-logstore" value="append log entry">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2-e11" edge="1" parent="p2-1" source="p2-boot" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#E11D48;strokeWidth=1.5;dashed=1;endArrow=block;fontSize=10;fontColor=#E11D48;exitX=0.2;exitY=0;entryX=0.85;entryY=0;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p2-svc" value="restart if flag ON">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1004" y="440"/>
+                            <mxPoint x="442" y="440"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+    <diagram name="3 - Service ON-OFF Lifecycle" id="page-lifecycle">
+        <mxGraphModel dx="1591" dy="1101" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="980" pageHeight="720" math="0" shadow="0">
+            <root>
+                <mxCell id="p3-0"/>
+                <mxCell id="p3-1" parent="p3-0"/>
+                <mxCell id="p3-title" parent="p3-1" style="text;html=1;fontSize=22;fontStyle=1;fontColor=#0F172A;fillColor=none;strokeColor=none;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="Service ON / OFF Lifecycle &amp; Boot Recovery" vertex="1">
+                    <mxGeometry height="30" width="800" x="40" y="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="p3-subtitle" parent="p3-1" style="text;html=1;fontSize=12;fontColor=#64748B;fillColor=none;strokeColor=none;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="State transitions • Coroutine lifecycle management • WorkManager fallback • Device reboot recovery" vertex="1">
+                    <mxGeometry height="20" width="800" x="40" y="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="p3-start" parent="p3-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#94A3B8;strokeWidth=1.5;verticalAlign=top;spacingTop=6;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:13px;color:#0F172A;&quot;&gt;User Toggles Service Control&lt;/b&gt;&lt;hr style=&quot;margin:4px 0;&quot;/&gt;&lt;div style=&quot;font-size:11px;color:#475569;&quot;&gt;Via Home switch, Settings switch, or Notification &quot;Stop&quot; action&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="70" width="340" x="320" y="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="p3-decide" parent="p3-1" style="shape=rhombus;whiteSpace=wrap;html=1;fillColor=#FFFBEB;strokeColor=#D97706;strokeWidth=2;fontSize=12;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:13px;&quot;&gt;Is Switch&lt;br/&gt;ON or OFF?&lt;/b&gt;" vertex="1">
+                    <mxGeometry height="110" width="200" x="390" y="190" as="geometry"/>
+                </mxCell>
+                <mxCell id="p3-on" parent="p3-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#059669;strokeWidth=2;verticalAlign=top;spacingTop=8;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:13px;color:#065F46;&quot;&gt;Service Switched ON (serviceEnabled = true)&lt;/b&gt;&lt;hr style=&quot;margin:6px 0;border-color:#A7F3D0;&quot;/&gt;&lt;div style=&quot;text-align:left;font-size:11px;color:#064E3B;line-height:1.45;&quot;&gt;&lt;b&gt;1.&lt;/b&gt; Persist &lt;code&gt;service_enabled = true&lt;/code&gt; to EncryptedSharedPreferences&lt;br/&gt;&lt;b&gt;2.&lt;/b&gt; Start &lt;code&gt;SmsForegroundService&lt;/code&gt; with persistent status notification&lt;br/&gt;&lt;b&gt;3.&lt;/b&gt; Launch 15s coroutine polling loop per enabled gateway&lt;br/&gt;&lt;b&gt;4.&lt;/b&gt; Schedule &lt;code&gt;SmsPollWorker&lt;/code&gt; (15-min fallback) via WorkManager&lt;br/&gt;&lt;b&gt;5.&lt;/b&gt; Update UI stats &amp; notification status text to &quot;Running&quot;&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="170" width="410" x="60" y="330" as="geometry"/>
+                </mxCell>
+                <mxCell id="p3-off" parent="p3-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF1F2;strokeColor=#E11D48;strokeWidth=2;verticalAlign=top;spacingTop=8;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:13px;color:#9F1239;&quot;&gt;Service Switched OFF (serviceEnabled = false)&lt;/b&gt;&lt;hr style=&quot;margin:6px 0;border-color:#FECDD3;&quot;/&gt;&lt;div style=&quot;text-align:left;font-size:11px;color:#881337;line-height:1.45;&quot;&gt;&lt;b&gt;1.&lt;/b&gt; Persist &lt;code&gt;service_enabled = false&lt;/code&gt; to EncryptedSharedPreferences&lt;br/&gt;&lt;b&gt;2.&lt;/b&gt; Call &lt;code&gt;stopForeground(STOP_FOREGROUND_REMOVE)&lt;/code&gt; &amp; &lt;code&gt;stopSelf()&lt;/code&gt;&lt;br/&gt;&lt;b&gt;3.&lt;/b&gt; Cancel all active coroutines &amp; in-flight HTTP requests immediately&lt;br/&gt;&lt;b&gt;4.&lt;/b&gt; Cancel periodic &lt;code&gt;SmsPollWorker&lt;/code&gt; via &lt;code&gt;WorkManager.cancel()&lt;/code&gt;&lt;br/&gt;&lt;b&gt;5.&lt;/b&gt; Notification dismissed • Zero background battery consumption&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="170" width="410" x="510" y="330" as="geometry"/>
+                </mxCell>
+                <mxCell id="p3-reboot-container" parent="p3-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#94A3B8;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=14;spacingTop=10;dashed=1;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;font-size:13px;color:#1E293B;&quot;&gt;DEVICE REBOOT RECOVERY LIFECYCLE (BootReceiver)&lt;/b&gt;" vertex="1">
+                    <mxGeometry height="140" width="860" x="60" y="530" as="geometry"/>
+                </mxCell>
+                <mxCell id="p3-reboot-event" parent="p3-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#64748B;strokeWidth=1.5;fontSize=11;verticalAlign=top;spacingTop=6;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b&gt;Device Rebooted&lt;/b&gt;&lt;hr style=&quot;margin:4px 0;&quot;/&gt;&lt;div style=&quot;font-size:10px;color:#475569;&quot;&gt;OS broadcasts&lt;br/&gt;&lt;code&gt;BOOT_COMPLETED&lt;/code&gt;&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="80" width="200" x="90" y="565" as="geometry"/>
+                </mxCell>
+                <mxCell id="p3-reboot-check" parent="p3-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#64748B;strokeWidth=1.5;fontSize=11;verticalAlign=top;spacingTop=6;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b&gt;BootReceiver.onReceive()&lt;/b&gt;&lt;hr style=&quot;margin:4px 0;&quot;/&gt;&lt;div style=&quot;font-size:10px;color:#475569;&quot;&gt;Reads persistent flag&lt;br/&gt;&lt;code&gt;Prefs.isServiceEnabled()&lt;/code&gt;&lt;/div&gt;" vertex="1">
+                    <mxGeometry height="80" width="230" x="340" y="565" as="geometry"/>
+                </mxCell>
+                <mxCell id="p3-reboot-on" parent="p3-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#059669;strokeWidth=1.5;fontSize=11;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;color:#065F46;&quot;&gt;If TRUE → Auto-start FGS&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px;color:#064E3B;&quot;&gt;Service resumes polling automatically&lt;/span&gt;" vertex="1">
+                    <mxGeometry height="42" width="270" x="620" y="555" as="geometry"/>
+                </mxCell>
+                <mxCell id="p3-reboot-off" parent="p3-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF1F2;strokeColor=#E11D48;strokeWidth=1.5;fontSize=11;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b style=&quot;color:#9F1239;&quot;&gt;If FALSE → Stay Idle&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px;color:#881337;&quot;&gt;Cancel any stale workers, do not launch&lt;/span&gt;" vertex="1">
+                    <mxGeometry height="42" width="270" x="620" y="607" as="geometry"/>
+                </mxCell>
+                <mxCell id="p3-e1" edge="1" parent="p3-1" source="p3-start" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0F172A;strokeWidth=1.5;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p3-decide" value="">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p3-e2" edge="1" parent="p3-1" source="p3-decide" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#059669;strokeWidth=2;endArrow=block;fontSize=12;fontColor=#059669;fontStyle=1;exitX=0;exitY=0.5;entryX=0.5;entryY=0;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p3-on" value="ON">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p3-e3" edge="1" parent="p3-1" source="p3-decide" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#E11D48;strokeWidth=2;endArrow=block;fontSize=12;fontColor=#E11D48;fontStyle=1;exitX=1;exitY=0.5;entryX=0.5;entryY=0;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p3-off" value="OFF">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p3-e4" edge="1" parent="p3-1" source="p3-reboot-event" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748B;strokeWidth=1.5;endArrow=block;exitX=1;exitY=0.5;entryX=0;entryY=0.5;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p3-reboot-check" value="">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p3-e5" edge="1" parent="p3-1" source="p3-reboot-check" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#059669;strokeWidth=1.5;endArrow=block;fontSize=10;fontColor=#059669;fontStyle=1;exitX=1;exitY=0.3;entryX=0;entryY=0.5;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p3-reboot-on" value="flag ON">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p3-e6" edge="1" parent="p3-1" source="p3-reboot-check" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#E11D48;strokeWidth=1.5;endArrow=block;fontSize=10;fontColor=#E11D48;fontStyle=1;exitX=1;exitY=0.7;entryX=0;entryY=0.5;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="p3-reboot-off" value="flag OFF">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
 </mxfile>
