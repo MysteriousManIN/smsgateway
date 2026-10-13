@@ -41,39 +41,86 @@ data class SmsMessage(
     val to: String,
     val message: String,
     val templateId: String? = null,
-    @Json(name = "created_at") val createdAt: String? = null
+    @Json(name = "created_at") val createdAt: String? = null,
+    val channel: String? = null
 )
 
-/** Lenient decoder: accepts every known backend alias, emits canonical shape. */
+/** Lenient decoder: accepts every known backend alias, extracts RCS text, emits canonical shape. */
 object SmsMessageAdapter {
+    private fun extractText(v: Any?): String? {
+        if (v == null) return null
+        return when (v) {
+            is String -> if (v.isNotBlank()) v.trim() else null
+            is Number -> {
+                val d = v.toDouble()
+                if (d % 1.0 == 0.0) d.toLong().toString() else v.toString()
+            }
+            is Boolean -> v.toString()
+            is Map<*, *> -> {
+                val priorityKeys = listOf(
+                    "text", "body", "message", "content", "fallback", "fallbackText",
+                    "fallback_text", "smsFallback", "sms_fallback", "description",
+                    "title", "caption", "textMessage", "plainText"
+                )
+                for (k in priorityKeys) {
+                    val found = extractText(v[k])
+                    if (!found.isNullOrBlank()) return found
+                }
+                for ((_, nested) in v) {
+                    val found = extractText(nested)
+                    if (!found.isNullOrBlank()) return found
+                }
+                null
+            }
+            is List<*> -> {
+                for (item in v) {
+                    val found = extractText(item)
+                    if (!found.isNullOrBlank()) return found
+                }
+                null
+            }
+            else -> null
+        }
+    }
+
     @FromJson
     @Suppress("UNUSED")
     fun fromJson(map: Map<String, Any?>): SmsMessage {
         fun str(vararg keys: String): String? {
             for (k in keys) {
                 val v = map[k] ?: continue
-                when (v) {
-                    is String -> if (v.isNotEmpty()) return v
-                    // Moshi decodes untyped JSON numbers as Double: render whole
-                    // values without a trailing ".0" (e.g. id 42, not "42.0").
-                    is Number -> {
-                        val d = v.toDouble()
-                        return if (d % 1.0 == 0.0) d.toLong().toString() else v.toString()
-                    }
-                    is Boolean -> return v.toString()
-                }
+                val text = extractText(v)
+                if (!text.isNullOrBlank()) return text
             }
             return null
         }
-        val id = str("id", "_id", "messageId", "message_id")
-            ?: throw com.squareup.moshi.JsonDataException("Required value 'id' missing")
-        val to = str("to", "recipient", "phone", "phoneNumber", "phone_number", "destination", "msisdn")
+
+        val to = str("to", "recipient", "phone", "phoneNumber", "phone_number", "destination", "msisdn", "mobile", "receiver")
             ?: throw com.squareup.moshi.JsonDataException("Required value 'to'/'recipient' missing")
-        val message = str("message", "body", "text", "content")
-            ?: throw com.squareup.moshi.JsonDataException("Required value 'message' missing")
-        val templateId = str("templateId", "template_id", "templateID", "dltTemplateId")
+
+        val channelRaw = str("channel", "type", "messageType", "msgType", "route", "medium")?.lowercase()
+        val hasRcsPayload = map["rcs"] != null || map["richCard"] != null || map["cards"] != null || channelRaw?.contains("rcs") == true
+        val channel = if (hasRcsPayload) "rcs" else (channelRaw ?: "sms")
+
+        val message = str(
+            "message", "body", "text", "content", "smsFallback", "fallbackText",
+            "fallback_text", "sms_fallback", "rcs", "richCard", "card", "data"
+        ) ?: throw com.squareup.moshi.JsonDataException("Required value 'message' missing")
+
+        val id = str("id", "_id", "messageId", "message_id", "uuid", "msgId")
+            ?: "msg-${System.currentTimeMillis()}-${(1000..9999).random()}"
+
+        val templateId = str("templateId", "template_id", "templateID", "dltTemplateId", "dlt_template_id", "template")
         val createdAt = str("created_at", "createdAt", "created")
-        return SmsMessage(id = id, to = to, message = message, templateId = templateId, createdAt = createdAt)
+
+        return SmsMessage(
+            id = id,
+            to = to,
+            message = message,
+            templateId = templateId,
+            createdAt = createdAt,
+            channel = channel
+        )
     }
 
     @ToJson
@@ -84,6 +131,7 @@ object SmsMessageAdapter {
         put("message", msg.message)
         if (msg.templateId != null) put("templateId", msg.templateId)
         if (msg.createdAt != null) put("created_at", msg.createdAt)
+        if (msg.channel != null) put("channel", msg.channel)
     }
 }
 
@@ -114,7 +162,8 @@ object PendingResponseAdapter {
 data class StatusRequest(
     val id: String,
     val status: String,
-    val error: String? = null
+    val error: String? = null,
+    val channel: String? = null
 )
 
 /** A status report pinned to the backend it belongs to (outbox entry). */
@@ -166,7 +215,10 @@ data class SmsLogItem(
 
 interface SmsApi {
     @GET("pending")
-    suspend fun getPending(@Query("limit") limit: Int = 10): PendingResponse
+    suspend fun getPending(
+        @Query("limit") limit: Int = 10,
+        @Query("_t") timestamp: Long = System.currentTimeMillis()
+    ): PendingResponse
 
     @POST("status")
     suspend fun postStatus(@Body body: StatusRequest): StatusResponse
@@ -178,7 +230,8 @@ interface SmsApi {
     suspend fun getLogs(
         @Query("status") status: String? = null,
         @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 20
+        @Query("limit") limit: Int = 20,
+        @Query("_t") timestamp: Long = System.currentTimeMillis()
     ): LogsResponse
 }
 
@@ -228,6 +281,8 @@ object ApiClient {
                 val req = chain.request().newBuilder()
                     .addHeader("Authorization", "Bearer ${config.token}")
                     .addHeader("Content-Type", "application/json")
+                    .addHeader("Cache-Control", "no-cache, no-store, must-revalidate")
+                    .addHeader("Pragma", "no-cache")
                     .build()
                 chain.proceed(req)
             }
@@ -275,6 +330,8 @@ object ApiClient {
                 val req = chain.request().newBuilder()
                     .addHeader("Authorization", "Bearer $prefsToken")
                     .addHeader("Content-Type", "application/json")
+                    .addHeader("Cache-Control", "no-cache, no-store, must-revalidate")
+                    .addHeader("Pragma", "no-cache")
                     .build()
                 chain.proceed(req)
             }

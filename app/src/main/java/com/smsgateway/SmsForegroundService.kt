@@ -41,6 +41,31 @@ class SmsForegroundService : Service() {
             return START_NOT_STICKY
         }
 
+        if (intent?.action == ACTION_CLEAR_ACKED) {
+            Log.d(TAG, "Clear acked action received")
+            Prefs.getInstance(this).clearAcked()
+            LogStore.add("Acked cache reset")
+            return START_STICKY
+        }
+
+        if (intent?.action == ACTION_SEND_NOW) {
+            val to = intent.getStringExtra("to") ?: ""
+            val message = intent.getStringExtra("message") ?: ""
+            val channel = intent.getStringExtra("channel") ?: "sms"
+            if (to.isNotBlank() && message.isNotBlank()) {
+                Log.d(TAG, "Direct send requested: to=$to msg='$message'")
+                LogStore.add("Direct dispatch to $to: '$message'")
+                val testMsg = SmsMessage(
+                    id = "direct-" + System.currentTimeMillis(),
+                    to = to,
+                    message = message,
+                    channel = channel
+                )
+                SmsSender.send(this, testMsg)
+            }
+            return START_STICKY
+        }
+
         // Normal / boot start — persist ON so reboot restores it.
         // BootReceiver only calls this when flag is already ON, so this is idempotent.
         try { Prefs.getInstance(this).serviceEnabled = true } catch (_: Exception) {}
@@ -113,14 +138,26 @@ class SmsForegroundService : Service() {
                         lastPollStr = now
                         prefs.lastPoll = now
 
+                        val unacked = pending.messages.filterNot { prefs.isAcked(it.id) }
+                        prefs.pendingCount = pending.messages.size
+
                         if (pending.messages.isEmpty()) {
                             Log.d(TAG, "Poll ${config.name} $now — 0 pending")
+                            LogStore.setHeartbeat("Poll ${config.name} — 0 pending (queue empty)")
+                            prefs.setBackendStatus(config.id, "ok")
+                        } else if (unacked.isEmpty()) {
+                            Log.d(TAG, "Poll ${config.name} $now — ${pending.messages.size} pending (all already acked)")
+                            LogStore.setHeartbeat("Poll ${config.name} — ${pending.messages.size} pending (already acked)")
                             prefs.setBackendStatus(config.id, "ok")
                         } else {
-                            Log.d(TAG, "Poll ${config.name} $now — ${pending.messages.size} pending")
-                            LogStore.add("Poll ${config.name} $now — ${pending.messages.size} pending")
-                            totalPending += pending.messages.size
+                            Log.d(TAG, "Poll ${config.name} $now — ${pending.messages.size} pending (${unacked.size} new)")
+                            LogStore.add("Poll ${config.name} $now — ${unacked.size} new message(s) to dispatch")
+                            totalPending += unacked.size
                             for (msg in pending.messages) {
+                                if (prefs.isAcked(msg.id)) {
+                                    Log.d(TAG, "Skip already-acked id=${msg.id}")
+                                    continue
+                                }
                                 val normalizedTo = SmsValidator.normalizePhone(msg.to)
                                 if (normalizedTo == null || !SmsValidator.isValidMessage(msg.message)) {
                                     Log.w(TAG, "Skip invalid message id=${msg.id} to='${msg.to}'")
@@ -129,7 +166,8 @@ class SmsForegroundService : Service() {
                                         api.postStatus(
                                             StatusRequest(
                                                 msg.id, "failed",
-                                                "Invalid phone format or message body"
+                                                "Invalid phone format or message body",
+                                                channel = msg.channel ?: "sms"
                                             )
                                         )
                                     } catch (_: Exception) {}
@@ -307,6 +345,8 @@ class SmsForegroundService : Service() {
         const val NOTIF_ID = 1001
         const val WORK_NAME = "sms_poll_fallback"
         const val ACTION_STOP = "STOP_SERVICE"
+        const val ACTION_CLEAR_ACKED = "CLEAR_ACKED"
+        const val ACTION_SEND_NOW = "SEND_NOW"
         /** Backend paused: token rejected — resume via Test/Edit. */
         const val STATUS_AUTH_ERROR = "auth-error"
         /** Backend paused: bad URL/path — resume via Test/Edit. */

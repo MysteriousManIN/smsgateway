@@ -93,8 +93,6 @@ class ModelSerializationTest {
 
     @Test
     fun testPendingResponse_rcsChannelFlagStillParses() {
-        // No public RCS send API exists — payloads flagged as RCS must still
-        // parse so the app can dispatch them as SMS fallback.
         val json = """
             { "messages": [ { "id": "rcs-1", "to": "919876543210", "message": "hi", "channel": "rcs" } ] }
         """.trimIndent()
@@ -104,6 +102,67 @@ class ModelSerializationTest {
         assertNotNull(response)
         assertEquals(1, response!!.messages.size)
         assertEquals("hi", response.messages[0].message)
+        assertEquals("rcs", response.messages[0].channel)
+    }
+
+    @Test
+    fun testPendingResponse_rcsNestedContent() {
+        val json = """
+            {
+                "messages": [
+                    {
+                        "id": "rcs-nested",
+                        "to": "+919876543210",
+                        "channel": "rcs",
+                        "content": {
+                            "text": "Your OTP code is 9876",
+                            "suggestions": []
+                        }
+                    }
+                ]
+            }
+        """.trimIndent()
+
+        val response = moshi.adapter(PendingResponse::class.java).fromJson(json)
+
+        assertNotNull(response)
+        assertEquals(1, response!!.messages.size)
+        val msg = response.messages[0]
+        assertEquals("rcs-nested", msg.id)
+        assertEquals("+919876543210", msg.to)
+        assertEquals("Your OTP code is 9876", msg.message)
+        assertEquals("rcs", msg.channel)
+    }
+
+    @Test
+    fun testPendingResponse_rcsRichCardAndFallback() {
+        val json = """
+            {
+                "messages": [
+                    {
+                        "id": "rcs-card",
+                        "recipient": "+919876543210",
+                        "rcs": {
+                            "richCard": {
+                                "title": "Account Alert",
+                                "description": "Payment received: $50"
+                            }
+                        },
+                        "smsFallback": "Payment received: $50"
+                    }
+                ]
+            }
+        """.trimIndent()
+
+        val response = moshi.adapter(PendingResponse::class.java).fromJson(json)
+
+        assertNotNull(response)
+        assertEquals(1, response!!.messages.size)
+        val msg = response.messages[0]
+        assertEquals("rcs-card", msg.id)
+        assertEquals("+919876543210", msg.to)
+        assertTrue(msg.message.contains("Payment received"))
+        assertEquals("rcs", msg.channel)
     }
 
     @Test

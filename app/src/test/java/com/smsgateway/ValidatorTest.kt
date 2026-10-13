@@ -9,13 +9,15 @@ class ValidatorTest {
     @Test
     fun normalizePhone_plainDigits() {
         assertEquals("919876543210", SmsValidator.normalizePhone("919876543210"))
+        assertEquals("9876543210", SmsValidator.normalizePhone("9876543210"))
+        assertEquals("9876543210", SmsValidator.normalizePhone("09876543210"))
     }
 
     @Test
     fun normalizePhone_internationalFormat() {
-        assertEquals("919876543210", SmsValidator.normalizePhone("+91 98765 43210"))
-        assertEquals("919876543210", SmsValidator.normalizePhone("+91-98765-43210"))
-        assertEquals("919876543210", SmsValidator.normalizePhone("(+91) 9876543210"))
+        assertEquals("+919876543210", SmsValidator.normalizePhone("+91 98765 43210"))
+        assertEquals("+919876543210", SmsValidator.normalizePhone("+91-98765-43210"))
+        assertEquals("+919876543210", SmsValidator.normalizePhone("(+91) 9876543210"))
     }
 
     @Test
@@ -29,9 +31,9 @@ class ValidatorTest {
 
     @Test
     fun normalizePhone_telUriAndSeparators() {
-        assertEquals("919876543210", SmsValidator.normalizePhone("tel:+91 98765 43210"))
-        assertEquals("919876543210", SmsValidator.normalizePhone("+91.98765.43210"))
-        assertEquals("919876543210", SmsValidator.normalizePhone("+91/98765/43210"))
+        assertEquals("+919876543210", SmsValidator.normalizePhone("tel:+91 98765 43210"))
+        assertEquals("+919876543210", SmsValidator.normalizePhone("+91.98765.43210"))
+        assertEquals("+919876543210", SmsValidator.normalizePhone("+91/98765/43210"))
     }
 
     @Test

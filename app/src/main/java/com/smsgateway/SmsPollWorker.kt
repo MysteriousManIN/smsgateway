@@ -43,11 +43,15 @@ class SmsPollWorker(
                 val pending = api.getPending(limit = 10)
                 Log.d("SmsGateway", "Worker: ${config.name} fetched ${pending.messages.size} pending")
                 for (msg in pending.messages) {
+                    if (prefs.isAcked(msg.id)) {
+                        Log.d("SmsGateway", "Worker skip already-acked id=${msg.id}")
+                        continue
+                    }
                     val normalizedTo = SmsValidator.normalizePhone(msg.to)
                     if (normalizedTo == null || !SmsValidator.isValidMessage(msg.message)) {
                         Log.w("SmsGateway", "Worker skip invalid message id=${msg.id}")
                         try {
-                            api.postStatus(StatusRequest(msg.id, "failed", "Invalid phone format or message body"))
+                            api.postStatus(StatusRequest(msg.id, "failed", "Invalid phone format or message body", channel = msg.channel ?: "sms"))
                         } catch (_: Exception) {}
                         continue
                     }
@@ -55,7 +59,7 @@ class SmsPollWorker(
                         SmsSender.send(ctx, msg.copy(to = normalizedTo), config)
                     } catch (e: Exception) {
                         Log.e("SmsGateway", "Worker send failed ${config.name} ${msg.id}: ${e.message}")
-                        try { api.postStatus(StatusRequest(msg.id, "failed", e.message)) } catch (_: Exception) {}
+                        try { api.postStatus(StatusRequest(msg.id, "failed", e.message, channel = msg.channel ?: "sms")) } catch (_: Exception) {}
                     }
                 }
                 prefs.setBackendStatus(config.id, "ok")

@@ -72,7 +72,7 @@ class GatewaysFragment : Fragment() {
     }
 
     private fun clearLogsForGateway(cfg: BackendConfig, root: View) {
-        // ponytail: remove logs containing gateway name — minimal per-connection clear
+        prefs.clearAcked()
         val before = LogStore.getAll().size
         LogStore.removeLogsContaining(cfg.name)
         // also remove logs containing its baseUrl host
@@ -82,9 +82,8 @@ class GatewaysFragment : Fragment() {
         } catch (_: Exception) {}
         val after = LogStore.getAll().size
         val removed = before - after
-        LogStore.add("Cleared $removed logs for ${cfg.name}")
-        // remove the just added log if we want only that gateway's? Keep it.
-        Snackbar.make(root, "Cleared $removed logs for ${cfg.name}", Snackbar.LENGTH_SHORT).show()
+        LogStore.add("Reset ack cache & cleared $removed logs for ${cfg.name}")
+        Snackbar.make(root, "Reset ack cache & cleared logs for ${cfg.name}", Snackbar.LENGTH_SHORT).show()
     }
 
     private fun showAddDialog() {

@@ -98,6 +98,35 @@ class MainActivity : AppCompatActivity() {
         observeNetwork()
         maybeLogBatteryHint()
         LogStore.add("App started — v1.0.0 multi-backend")
+        handleCustomIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleCustomIntent(intent)
+    }
+
+    private fun handleCustomIntent(intent: Intent?) {
+        if (intent == null) return
+        if (intent.action == "com.smsgateway.CLEAR_ACKED" || intent.getBooleanExtra("clear_acked", false)) {
+            prefs.clearAcked()
+            LogStore.add("Acked cache cleared")
+            Toast.makeText(this, "Acked cache cleared", Toast.LENGTH_SHORT).show()
+        }
+        if (intent.action == "com.smsgateway.TEST_SEND") {
+            val to = intent.getStringExtra("to") ?: ""
+            val message = intent.getStringExtra("message") ?: ""
+            val channel = intent.getStringExtra("channel") ?: "sms"
+            if (to.isNotBlank() && message.isNotBlank()) {
+                LogStore.add("Triggered test send: to=$to msg='$message'")
+                SmsSender.send(this, SmsMessage("test-" + System.currentTimeMillis(), to, message, channel = channel))
+            }
+        }
+        if (intent.action == "com.smsgateway.RESTART_SERVICE") {
+            SmsForegroundService.stop(this)
+            SmsForegroundService.start(this)
+        }
     }
 
     private fun openDrawer() {

@@ -66,12 +66,17 @@ object SmsSender {
         val subId = try { Prefs.getInstance(context).simSubscriptionId } catch (_: Exception) { -1 }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val base = context.getSystemService(SmsManager::class.java) ?: SmsManager.getDefault()
-            if (subId < 0) return base
+            val targetSubId = if (subId >= 0) {
+                subId
+            } else {
+                val defaultSubId = android.telephony.SubscriptionManager.getDefaultSmsSubscriptionId()
+                if (android.telephony.SubscriptionManager.isValidSubscriptionId(defaultSubId)) defaultSubId else -1
+            }
+            if (targetSubId < 0) return base
             return try {
-                base.createForSubscriptionId(subId)
+                base.createForSubscriptionId(targetSubId)
             } catch (_: Exception) {
-                Log.w(TAG, "Selected SIM subId=$subId unavailable — using default")
-                LogStore.add("! Selected SIM unavailable — sent via system default SIM")
+                Log.w(TAG, "Selected SIM subId=$targetSubId unavailable — using base SmsManager")
                 base
             }
         }
@@ -169,12 +174,14 @@ object SmsSender {
                     if (resultCode != Activity.RESULT_OK) {
                         st.failed.set(true)
                         if (st.firstError == null) {
+                            val carrierErr = intent?.getIntExtra("errorCode", -1) ?: -1
                             st.firstError = when (resultCode) {
-                                SmsManager.RESULT_ERROR_GENERIC_FAILURE -> "RESULT_ERROR_GENERIC_FAILURE"
-                                SmsManager.RESULT_ERROR_NO_SERVICE -> "RESULT_ERROR_NO_SERVICE"
-                                SmsManager.RESULT_ERROR_NULL_PDU -> "RESULT_ERROR_NULL_PDU"
-                                SmsManager.RESULT_ERROR_RADIO_OFF -> "RESULT_ERROR_RADIO_OFF"
-                                else -> "UNKNOWN_$resultCode"
+                                SmsManager.RESULT_ERROR_GENERIC_FAILURE -> "GENERIC_FAILURE"
+                                SmsManager.RESULT_ERROR_NO_SERVICE -> "NO_SERVICE"
+                                SmsManager.RESULT_ERROR_NULL_PDU -> "NULL_PDU"
+                                SmsManager.RESULT_ERROR_RADIO_OFF -> "RADIO_OFF"
+                                17 -> "CARRIER_BARRED_17 (Carrier barred SMS: check SMS pack or DLT/OTP template policy)"
+                                else -> "CARRIER_ERROR_$resultCode (networkCode=$carrierErr)"
                             }
                         }
                     }
@@ -215,7 +222,12 @@ object SmsSender {
                     unregisterQuietly(appContext, st.sentReceiver)
                     val error = st.firstError ?: "TIMEOUT_NO_CARRIER_RESULT"
                     Log.w(TAG, "Send timeout id=${msg.id}")
-                    LogStore.add("✗ Timeout sending to ${msg.to}")
+                    // No carrier result in 90s: the SMS reached the modem
+                    // (SmsManager accepted it) but the network/IMS leg never
+                    // answered — typically a carrier stall (plan/balance over,
+                    // SMSC/IMS hiccup), not a backend problem. Tell the user
+                    // how to confirm it with the stock Messages app.
+                    LogStore.add("✗ No carrier result in 90s to ${msg.to} — send a test SMS from Messages app; check SIM plan/balance")
                     reportStatus(appContext, resolveApi(appContext, config), config, msg, "failed", error)
                     prefs.incrementFailed()
                 }
@@ -233,6 +245,12 @@ object SmsSender {
                 appContext.registerReceiver(deliveredReceiver, deliveredFilter)
             }
 
+            val dest = if (!msg.to.startsWith("+") && msg.to.length == 10 && msg.to[0] in '6'..'9') {
+                "+91${msg.to}"
+            } else {
+                msg.to
+            }
+
             if (totalParts > 1) {
                 val sentIntents = ArrayList<PendingIntent>(totalParts)
                 val deliveredIntents = ArrayList<PendingIntent>(totalParts)
@@ -241,7 +259,11 @@ object SmsSender {
                         PendingIntent.getBroadcast(
                             appContext,
                             requestCodeSeq.getAndIncrement(),
-                            Intent(sentAction).apply { putExtra("msg_id", msg.id); putExtra("part", i) },
+                            Intent(sentAction).apply {
+                                setPackage(appContext.packageName)
+                                putExtra("msg_id", msg.id)
+                                putExtra("part", i)
+                            },
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                         )
                     )
@@ -249,28 +271,38 @@ object SmsSender {
                         PendingIntent.getBroadcast(
                             appContext,
                             requestCodeSeq.getAndIncrement(),
-                            Intent(deliveredAction).apply { putExtra("msg_id", msg.id); putExtra("part", i) },
+                            Intent(deliveredAction).apply {
+                                setPackage(appContext.packageName)
+                                putExtra("msg_id", msg.id)
+                                putExtra("part", i)
+                            },
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                         )
                     )
                 }
-                smsManager.sendMultipartTextMessage(msg.to, null, parts, sentIntents, deliveredIntents)
-                Log.d(TAG, "sendMultipart to=${msg.to} parts=$totalParts id=${msg.id} via ${config?.name}")
+                smsManager.sendMultipartTextMessage(dest, null, parts, sentIntents, deliveredIntents)
+                Log.d(TAG, "sendMultipart to=$dest parts=$totalParts id=${msg.id} channel=${msg.channel} via ${config?.name}")
             } else {
                 val sentIntent = PendingIntent.getBroadcast(
                     appContext,
                     requestCodeSeq.getAndIncrement(),
-                    Intent(sentAction).apply { putExtra("msg_id", msg.id) },
+                    Intent(sentAction).apply {
+                        setPackage(appContext.packageName)
+                        putExtra("msg_id", msg.id)
+                    },
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
                 val deliveredIntent = PendingIntent.getBroadcast(
                     appContext,
                     requestCodeSeq.getAndIncrement(),
-                    Intent(deliveredAction).apply { putExtra("msg_id", msg.id) },
+                    Intent(deliveredAction).apply {
+                        setPackage(appContext.packageName)
+                        putExtra("msg_id", msg.id)
+                    },
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
-                smsManager.sendTextMessage(msg.to, null, msg.message, sentIntent, deliveredIntent)
-                Log.d(TAG, "sendText to=${msg.to} id=${msg.id} via ${config?.name}")
+                smsManager.sendTextMessage(dest, null, msg.message, sentIntent, deliveredIntent)
+                Log.d(TAG, "sendText to=$dest id=${msg.id} channel=${msg.channel} via ${config?.name}")
             }
         } catch (e: SecurityException) {
             abortSend(appContext, msg.id, probe)
@@ -309,9 +341,11 @@ object SmsSender {
         st.timeout?.let { try { Handler(appContext.mainLooper).removeCallbacks(it) } catch (_: Exception) {} }
         unregisterQuietly(appContext, st.sentReceiver)
         val prefs = Prefs.getInstance(appContext)
+        val isRcs = msg.channel.equals("rcs", ignoreCase = true)
+        val channelTag = if (isRcs) "RCS(SMS)" else "SMS"
         if (st.failed.get()) {
             val error = st.firstError ?: "UNKNOWN"
-            LogStore.add("✗ Failed $error to ${msg.to}")
+            LogStore.add("✗ Failed [$channelTag] $error to ${msg.to}")
             prefs.incrementFailed()
             pendingDelivered.remove(msg.id)?.let { unregisterQuietly(appContext, it) }
             reportStatus(appContext, statusApi, config, msg, "failed", error)
@@ -319,9 +353,9 @@ object SmsSender {
             // Carrier confirmed all parts: never send this ID again, even if our
             // status report itself fails below (it goes to the outbox instead).
             prefs.markAcked(msg.id)
-            LogStore.add("✓ Sent to ${msg.to} [${msg.id}] via ${config?.name ?: "gateway"}")
+            LogStore.add("✓ Sent [$channelTag] to ${msg.to} [${msg.id}] via ${config?.name ?: "gateway"}")
             prefs.incrementSent()
-            Log.d(TAG, "SMS sent OK id=${msg.id} to=${msg.to}")
+            Log.d(TAG, "SMS sent OK id=${msg.id} to=${msg.to} channel=${msg.channel}")
             reportStatus(appContext, statusApi, config, msg, "sent", null)
         }
     }
@@ -342,7 +376,7 @@ object SmsSender {
         status: String,
         error: String?
     ) {
-        val req = StatusRequest(msg.id, status, error)
+        val req = StatusRequest(msg.id, status, error, channel = msg.channel ?: "sms")
         val backendId = config?.id
         senderScope.launch {
             var ok = postWithRetry(api, req)
@@ -354,7 +388,9 @@ object SmsSender {
             }
             val prefs = Prefs.getInstance(appContext)
             if (ok) {
-                prefs.markAcked(msg.id)
+                if (status == "sent" || status == "delivered") {
+                    prefs.markAcked(msg.id)
+                }
                 Log.d(TAG, "POST status $status for ${msg.id} via ${config?.name}")
             } else if (backendId != null) {
                 // Kept on disk, scoped to THIS backend — flushed on next poll
@@ -422,6 +458,25 @@ object LogStore {
         val ts = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
         logs.add(0, "[$ts] $entry")
         if (logs.size > 50) logs.removeAt(logs.size - 1)
+        listeners.forEach { it.invoke() }
+        Log.d("SmsGateway", entry)
+    }
+
+    /**
+     * Heartbeat log line that updates in-place so polling activity is visible in real-time
+     * without pushing out valuable sent/failed logs from the 50-entry history.
+     */
+    @Synchronized
+    fun setHeartbeat(entry: String) {
+        val ts = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
+        val formatted = "[$ts] $entry"
+        val idx = logs.indexOfFirst { it.contains("Poll ") }
+        if (idx >= 0) {
+            logs[idx] = formatted
+        } else {
+            logs.add(0, formatted)
+            if (logs.size > 50) logs.removeAt(logs.size - 1)
+        }
         listeners.forEach { it.invoke() }
         Log.d("SmsGateway", entry)
     }

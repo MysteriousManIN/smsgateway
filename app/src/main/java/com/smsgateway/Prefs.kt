@@ -214,6 +214,14 @@ class Prefs private constructor(context: Context) {
         } catch (_: Exception) {}
     }
 
+    /** Clear cached acked IDs so already-seen messages can be re-dispatched if needed. */
+    @Synchronized
+    fun clearAcked() {
+        try {
+            prefs.edit().remove(KEY_ACKED_IDS).apply()
+        } catch (_: Exception) {}
+    }
+
     // ---------- Pending status outbox (postStatus retry across restarts) ----------
     // Entries are scoped per backend id — flushing backend A must never post
     // backend B's message IDs to A's /status endpoint (tenant pollution).
@@ -304,6 +312,10 @@ class Prefs private constructor(context: Context) {
         get() = prefs.getInt(KEY_FAILED, 0)
         set(v) { prefs.edit().putInt(KEY_FAILED, v).apply() }
 
+    var pendingCount: Int
+        get() = prefs.getInt(KEY_PENDING, 0)
+        set(v) { prefs.edit().putInt(KEY_PENDING, v).apply() }
+
     var lastPoll: String?
         get() = prefs.getString(KEY_LAST_POLL, null)
         set(v) { prefs.edit().putString(KEY_LAST_POLL, v).apply() }
@@ -344,6 +356,7 @@ class Prefs private constructor(context: Context) {
         private const val KEY_TOKEN = "gateway_token"
         private const val KEY_SENT = "sent_count"
         private const val KEY_FAILED = "failed_count"
+        private const val KEY_PENDING = "pending_count"
         private const val KEY_LAST_POLL = "last_poll"
         private const val KEY_BACKEND_CONFIGS = "backend_configs"
         private const val KEY_MIGRATED = "backend_migrated_v2"

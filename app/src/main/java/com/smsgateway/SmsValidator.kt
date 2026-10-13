@@ -4,17 +4,22 @@ package com.smsgateway
 object SmsValidator {
 
     /**
-     * Accepts "+91 98765 43210", "919876543210", dashes/spaces/parens/dots,
-     * and "tel:" URIs. Returns digits-only (10–15) or null when invalid.
+     * Accepts "+91 98765 43210", "919876543210", "09876543210", dashes/spaces/parens/dots,
+     * and "tel:" URIs. Preserves international '+' prefix when present.
+     * Returns valid phone format (10–15 digits) or null when invalid.
      */
     fun normalizePhone(raw: String): String? {
         var s = raw.trim()
         if (s.startsWith("tel:", ignoreCase = true)) s = s.substring(4).trim()
-        // Keep a single leading '+', drop every other non-digit separator.
-        var digits = s.filterIndexed { i, c -> c.isDigit() || (c == '+' && i == 0) }
-        if (digits.startsWith("+")) digits = digits.substring(1)
-        if (digits.length !in 10..15 || digits.isEmpty() || !digits.all { it.isDigit() }) return null
-        return digits
+        val hasPlus = s.contains("+")
+        var digits = s.filter { it.isDigit() }
+        if (digits.isEmpty()) return null
+        // Strip national trunk prefix '0' (e.g. 09876543210 -> 9876543210)
+        if (!hasPlus && digits.length == 11 && digits.startsWith("0")) {
+            digits = digits.substring(1)
+        }
+        if (digits.length !in 10..15) return null
+        return if (hasPlus) "+$digits" else digits
     }
 
     fun isValidMessage(message: String): Boolean =
