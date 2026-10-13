@@ -28,6 +28,13 @@ class ValidatorTest {
     }
 
     @Test
+    fun normalizePhone_telUriAndSeparators() {
+        assertEquals("919876543210", SmsValidator.normalizePhone("tel:+91 98765 43210"))
+        assertEquals("919876543210", SmsValidator.normalizePhone("+91.98765.43210"))
+        assertEquals("919876543210", SmsValidator.normalizePhone("+91/98765/43210"))
+    }
+
+    @Test
     fun messageValidation() {
         assertEquals(true, SmsValidator.isValidMessage("Hello"))
         assertEquals(false, SmsValidator.isValidMessage("   "))

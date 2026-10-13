@@ -4,11 +4,14 @@ package com.smsgateway
 object SmsValidator {
 
     /**
-     * Accepts "+91 98765 43210", "919876543210", dashes/spaces/parens.
-     * Returns digits-only (10–15) or null when invalid.
+     * Accepts "+91 98765 43210", "919876543210", dashes/spaces/parens/dots,
+     * and "tel:" URIs. Returns digits-only (10–15) or null when invalid.
      */
     fun normalizePhone(raw: String): String? {
-        var digits = raw.trim().replace(Regex("[\\s\\-().]"), "")
+        var s = raw.trim()
+        if (s.startsWith("tel:", ignoreCase = true)) s = s.substring(4).trim()
+        // Keep a single leading '+', drop every other non-digit separator.
+        var digits = s.filterIndexed { i, c -> c.isDigit() || (c == '+' && i == 0) }
         if (digits.startsWith("+")) digits = digits.substring(1)
         if (digits.length !in 10..15 || digits.isEmpty() || !digits.all { it.isDigit() }) return null
         return digits

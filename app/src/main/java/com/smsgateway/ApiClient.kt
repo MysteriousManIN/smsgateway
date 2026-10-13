@@ -1,9 +1,11 @@
 package com.smsgateway
 
 import android.content.Context
+import com.squareup.moshi.FromJson
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
+import com.squareup.moshi.ToJson
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -13,6 +15,26 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.*
 import java.util.concurrent.TimeUnit
 
+/** Shared Moshi instance — tolerant SMS adapters first, Kotlin fallback second. */
+fun newAppMoshi(): Moshi = Moshi.Builder()
+    .add(SmsMessageAdapter)
+    .add(PendingResponseAdapter)
+    .add(KotlinJsonAdapterFactory())
+    .build()
+
+/**
+ * Canonical message model. The wire format varies across backends:
+ * - destination may arrive as `to` (API doc) or `recipient` (DB column),
+ *   also tolerated: `phone`, `phoneNumber`, `destination`.
+ * - body may arrive as `message` (API doc) or `body`/`text`.
+ * - template may arrive as `templateId` (API doc) or `template_id` (DB column).
+ * - `id` may be a JSON string or number.
+ * - extra keys (e.g. `"channel": "rcs"`) are ignored: Android exposes no
+ *   third-party RCS send API, so everything is dispatched as SMS via
+ *   SmsManager (carrier SMS, incl. multipart). An RCS-flagged payload with a
+ *   text body still sends as SMS; rich-card-only payloads without text fail
+ *   validation and are reported as `failed`, never silently dropped.
+ */
 @JsonClass(generateAdapter = true)
 data class SmsMessage(
     val id: String,
@@ -22,10 +44,71 @@ data class SmsMessage(
     @Json(name = "created_at") val createdAt: String? = null
 )
 
+/** Lenient decoder: accepts every known backend alias, emits canonical shape. */
+object SmsMessageAdapter {
+    @FromJson
+    @Suppress("UNUSED")
+    fun fromJson(map: Map<String, Any?>): SmsMessage {
+        fun str(vararg keys: String): String? {
+            for (k in keys) {
+                val v = map[k] ?: continue
+                when (v) {
+                    is String -> if (v.isNotEmpty()) return v
+                    // Moshi decodes untyped JSON numbers as Double: render whole
+                    // values without a trailing ".0" (e.g. id 42, not "42.0").
+                    is Number -> {
+                        val d = v.toDouble()
+                        return if (d % 1.0 == 0.0) d.toLong().toString() else v.toString()
+                    }
+                    is Boolean -> return v.toString()
+                }
+            }
+            return null
+        }
+        val id = str("id", "_id", "messageId", "message_id")
+            ?: throw com.squareup.moshi.JsonDataException("Required value 'id' missing")
+        val to = str("to", "recipient", "phone", "phoneNumber", "phone_number", "destination", "msisdn")
+            ?: throw com.squareup.moshi.JsonDataException("Required value 'to'/'recipient' missing")
+        val message = str("message", "body", "text", "content")
+            ?: throw com.squareup.moshi.JsonDataException("Required value 'message' missing")
+        val templateId = str("templateId", "template_id", "templateID", "dltTemplateId")
+        val createdAt = str("created_at", "createdAt", "created")
+        return SmsMessage(id = id, to = to, message = message, templateId = templateId, createdAt = createdAt)
+    }
+
+    @ToJson
+    @Suppress("UNUSED")
+    fun toJson(msg: SmsMessage): Map<String, Any?> = buildMap {
+        put("id", msg.id)
+        put("to", msg.to)
+        put("message", msg.message)
+        if (msg.templateId != null) put("templateId", msg.templateId)
+        if (msg.createdAt != null) put("created_at", msg.createdAt)
+    }
+}
+
 @JsonClass(generateAdapter = true)
 data class PendingResponse(
     val messages: List<SmsMessage> = emptyList()
 )
+
+/** Tolerates `{ "messages": [...] }` (API doc) and `{ "data": [...] }` wrappers. */
+object PendingResponseAdapter {
+    @FromJson
+    @Suppress("UNUSED")
+    fun fromJson(map: Map<String, Any?>): PendingResponse {
+        @Suppress("UNCHECKED_CAST")
+        val raw = (map["messages"] as? List<Map<String, Any?>>)
+            ?: (map["data"] as? List<Map<String, Any?>>)
+            ?: (map["items"] as? List<Map<String, Any?>>)
+            ?: emptyList()
+        return PendingResponse(messages = raw.map { SmsMessageAdapter.fromJson(it) })
+    }
+
+    @ToJson
+    @Suppress("UNUSED")
+    fun toJson(resp: PendingResponse): Map<String, Any?> = mapOf("messages" to resp.messages)
+}
 
 @JsonClass(generateAdapter = true)
 data class StatusRequest(
@@ -140,7 +223,7 @@ object ApiClient {
             // explicit invalidation, and user edits take effect immediately.
             if (cached != null && fingerprints[config.id] == fingerprint) return cached
 
-            val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+            val moshi = newAppMoshi()
             val authInterceptor = Interceptor { chain ->
                 val req = chain.request().newBuilder()
                     .addHeader("Authorization", "Bearer ${config.token}")
@@ -186,7 +269,7 @@ object ApiClient {
             ?: throw IllegalStateException("Backend URL not configured or not https://")
         synchronized(lock) {
             if (legacyApi != null && legacyBaseUrl == baseUrl) return legacyApi!!
-            val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+            val moshi = newAppMoshi()
             val prefsToken = prefs.gatewayToken ?: ""
             val authInterceptor = Interceptor { chain ->
                 val req = chain.request().newBuilder()

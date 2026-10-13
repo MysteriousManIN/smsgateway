@@ -136,6 +136,11 @@ Response `200 OK`:
 
 Empty queue: `{ "messages": [] }`
 
+The app also accepts DB-shaped rows (`"recipient"` instead of `"to"`,
+`"template_id"` instead of `"templateId"`, `"body"`/`"text"` instead of
+`"message"`, numeric `id`, and a `"data"` wrapper instead of `"messages"`),
+plus extra keys (e.g. `"channel": "rcs"` are ignored — see §8.9).
+
 ```bash
 curl -X GET "https://api.yourdomain.com/api/v1/sms/pending?limit=10" \
   -H "Authorization: Bearer YOUR_SMS_GATEWAY_TOKEN"
@@ -328,6 +333,13 @@ The release build is currently signed with the debug keystore (see `signingConfi
 5. **`Activity ... does not exist` in Android Studio:** Run **File → Sync Project with Gradle Files**, then **Build → Clean Project**, then Run again.
 6. **`Device is already activating`:** stop the previous Run (red ■ button) and Run again.
 7. **No public IP needed on the phone:** it only makes outbound HTTPS calls, so CGNAT / mobile data / home Wi-Fi all work without port forwarding or VPN.
+8. **SMS not sending — check in order:**
+   - Service is ON (Home tab) and at least one gateway is enabled (Gateways tab).
+   - `Test` on the gateway returns `✓ pending: N`. `401/403` = wrong token, `404` = wrong Base URL — the backend is auto-paused until you re-test.
+   - SMS permission granted (app routes you to Settings if permanently denied).
+   - SIM has balance/signal; Logs tab shows `RESULT_ERROR_NO_SERVICE` / `RADIO_OFF` when the radio can't reach a tower.
+   - Poll errors saying `backend JSON missing id/to/message` mean the backend returns an unexpected shape — the app accepts `to`/`recipient`, `message`/`body`/`text`, `templateId`/`template_id`.
+9. **RCS:** Android exposes no public API for third-party apps to send RCS. The app always dispatches via `SmsManager` (plain SMS, multipart handled). Messages flagged as RCS by the backend are still delivered as SMS fallback; rich-card-only payloads without text are reported as `failed`.
 
 ---
 

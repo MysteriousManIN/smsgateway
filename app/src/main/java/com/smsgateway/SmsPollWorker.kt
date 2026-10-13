@@ -76,7 +76,11 @@ class SmsPollWorker(
                 }
             } catch (e: Exception) {
                 Log.e("SmsGateway", "Worker doWork failed ${config.name}: ${e.message}", e)
-                LogStore.add("Worker error ${config.name}: ${e.message}")
+                val hint = (e.message ?: "").contains("Required value", ignoreCase = true)
+                LogStore.add(
+                    if (hint) "Worker error ${config.name}: backend JSON missing id/to/message — update backend or app"
+                    else "Worker error ${config.name}: ${e.message}"
+                )
                 prefs.setBackendStatus(config.id, "fail")
                 anyFail = true
             }

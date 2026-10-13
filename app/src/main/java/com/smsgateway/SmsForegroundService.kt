@@ -171,7 +171,13 @@ class SmsForegroundService : Service() {
                         throw e
                     } catch (e: Exception) {
                         Log.e(TAG, "Polling error backend ${config.name}: ${e.message}", e)
-                        LogStore.add("Poll error ${config.name}: ${e.message}")
+                        // JSON contract mismatches used to surface as bare
+                        // "Required value 'to' missing" — point at the fix.
+                        val hint = (e.message ?: "").contains("Required value", ignoreCase = true)
+                        LogStore.add(
+                            if (hint) "Poll error ${config.name}: backend JSON missing id/to/message — update backend or app"
+                            else "Poll error ${config.name}: ${e.message}"
+                        )
                         prefs.setBackendStatus(config.id, "fail")
                     }
                 }

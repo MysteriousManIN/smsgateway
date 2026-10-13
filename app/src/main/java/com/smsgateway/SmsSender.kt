@@ -107,6 +107,33 @@ object SmsSender {
             Log.d(TAG, "Skip already-acked id=${msg.id}")
             return
         }
+        // Fail fast when the message could never be dispatched: blank body or
+        // blank destination. (Poll loops normalize first, but direct callers
+        // and tolerant-parser payloads may still reach here.)
+        if (msg.message.isBlank()) {
+            Log.w(TAG, "Skip empty message id=${msg.id}")
+            LogStore.add("! Skip empty message to '${msg.to}'")
+            reportStatus(appContext, resolveApi(appContext, config), config, msg, "failed", "Empty message body")
+            return
+        }
+        if (msg.to.isBlank()) {
+            Log.w(TAG, "Skip blank destination id=${msg.id}")
+            LogStore.add("! Skip message with blank destination")
+            reportStatus(appContext, resolveApi(appContext, config), config, msg, "failed", "Blank destination")
+            return
+        }
+        // Pre-flight runtime permission check: without SEND_SMS every
+        // sendTextMessage throws SecurityException. Surface it as an
+        // actionable log instead of a bare carrier failure.
+        if (androidx.core.content.ContextCompat.checkSelfPermission(
+                appContext, android.Manifest.permission.SEND_SMS
+            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            Log.e(TAG, "SEND_SMS not granted — cannot send id=${msg.id}")
+            LogStore.add("✗ SMS permission not granted — enable it, then restart service")
+            reportStatus(appContext, resolveApi(appContext, config), config, msg, "failed", "SEND_SMS permission not granted")
+            return
+        }
         // One send per message at a time — concurrent polls/worker must not race.
         val probe = PendingSend(AtomicInteger(0))
         if (pendingSends.putIfAbsent(msg.id, probe) != null) {
@@ -263,7 +290,7 @@ object SmsSender {
     /** Unregister everything for a message that died before/without carrier results. */
     private fun abortSend(appContext: Context, msgId: String, probe: PendingSend) {
         pendingSends.remove(msgId)
-        try { Handler(appContext.mainLooper).removeCallbacks(probe.timeout ?: return) } catch (_: Exception) {}
+        probe.timeout?.let { try { Handler(appContext.mainLooper).removeCallbacks(it) } catch (_: Exception) {} }
         unregisterQuietly(appContext, probe.sentReceiver)
         pendingDelivered.remove(msgId)?.let { unregisterQuietly(appContext, it) }
     }
@@ -277,8 +304,10 @@ object SmsSender {
         st: PendingSend
     ) {
         pendingSends.remove(msg.id)
-        try { Handler(appContext.mainLooper).removeCallbacks(st.timeout ?: return) } catch (_: Exception) {}
-        unregisterQuietly(appContext, st.sentReceiver, null)
+        // Cancel the 90s failsafe; a null timeout only happens if finishSend
+        // raced an early abort — never skip the status report below.
+        st.timeout?.let { try { Handler(appContext.mainLooper).removeCallbacks(it) } catch (_: Exception) {} }
+        unregisterQuietly(appContext, st.sentReceiver)
         val prefs = Prefs.getInstance(appContext)
         if (st.failed.get()) {
             val error = st.firstError ?: "UNKNOWN"

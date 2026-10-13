@@ -1,8 +1,6 @@
 package com.smsgateway
 
-import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -10,7 +8,7 @@ import org.junit.Test
 
 class ModelSerializationTest {
 
-    private val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+    private val moshi = newAppMoshi()
 
     @Test
     fun testBackendConfigMasking() {
@@ -47,6 +45,65 @@ class ModelSerializationTest {
         assertEquals("919876543210", msg.to)
         assertEquals("Your OTP is 1234", msg.message)
         assertEquals("DLT-01", msg.templateId)
+    }
+
+    @Test
+    fun testPendingResponse_dbColumnShape() {
+        // Backends serializing the DB row directly emit `recipient` /
+        // `template_id` — must parse, not crash the poll loop.
+        val json = """
+            {
+                "messages": [
+                    {
+                        "id": "msg-002",
+                        "recipient": "919876543210",
+                        "message": "DB-shaped row",
+                        "template_id": "DLT-02",
+                        "created_at": "2026-10-09T07:00:00Z"
+                    }
+                ]
+            }
+        """.trimIndent()
+
+        val response = moshi.adapter(PendingResponse::class.java).fromJson(json)
+
+        assertNotNull(response)
+        assertEquals(1, response!!.messages.size)
+        val msg = response.messages[0]
+        assertEquals("msg-002", msg.id)
+        assertEquals("919876543210", msg.to)
+        assertEquals("DB-shaped row", msg.message)
+        assertEquals("DLT-02", msg.templateId)
+    }
+
+    @Test
+    fun testPendingResponse_dataWrapperAndNumericId() {
+        val json = """
+            { "data": [ { "id": 42, "phone": "+91 98765 43210", "body": "wrapped", "extra": "ignored" } ] }
+        """.trimIndent()
+
+        val response = moshi.adapter(PendingResponse::class.java).fromJson(json)
+
+        assertNotNull(response)
+        assertEquals(1, response!!.messages.size)
+        assertEquals("42", response.messages[0].id)
+        assertEquals("+91 98765 43210", response.messages[0].to)
+        assertEquals("wrapped", response.messages[0].message)
+    }
+
+    @Test
+    fun testPendingResponse_rcsChannelFlagStillParses() {
+        // No public RCS send API exists — payloads flagged as RCS must still
+        // parse so the app can dispatch them as SMS fallback.
+        val json = """
+            { "messages": [ { "id": "rcs-1", "to": "919876543210", "message": "hi", "channel": "rcs" } ] }
+        """.trimIndent()
+
+        val response = moshi.adapter(PendingResponse::class.java).fromJson(json)
+
+        assertNotNull(response)
+        assertEquals(1, response!!.messages.size)
+        assertEquals("hi", response.messages[0].message)
     }
 
     @Test
