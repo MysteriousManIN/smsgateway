@@ -161,7 +161,7 @@ class SmsForegroundService : Service() {
                                 val normalizedTo = SmsValidator.normalizePhone(msg.to)
                                 if (normalizedTo == null || !SmsValidator.isValidMessage(msg.message)) {
                                     Log.w(TAG, "Skip invalid message id=${msg.id} to='${msg.to}'")
-                                    LogStore.add("! Skip invalid message to '${msg.to}'\nMsg: \"${msg.message}\"")
+                                    LogStore.add("! Skip invalid message to '${msg.to}' [${msg.id}]")
                                     try {
                                         api.postStatus(
                                             StatusRequest(

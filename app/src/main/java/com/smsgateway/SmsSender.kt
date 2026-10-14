@@ -150,7 +150,7 @@ object SmsSender {
 
         fun failNow(error: String) {
             pendingSends.remove(msg.id)
-            LogStore.add("✗ Failed to ${msg.to}: $error\nMsg: \"${msg.message}\"")
+            LogStore.add("✗ Failed to ${msg.to} [${msg.id}]: $error")
             reportStatus(appContext, statusApi, config, msg, "failed", error)
             prefs.incrementFailed()
         }
@@ -228,7 +228,7 @@ object SmsSender {
                     // answered — typically a carrier stall (plan/balance over,
                     // SMSC/IMS hiccup), not a backend problem. Tell the user
                     // how to confirm it with the stock Messages app.
-                    LogStore.add("✗ No carrier result in 90s to ${msg.to} — check SIM plan/balance\nMsg: \"${msg.message}\"")
+                    LogStore.add("✗ No carrier result in 90s to ${msg.to} [${msg.id}] — check SIM plan/balance")
                     reportStatus(appContext, resolveApi(appContext, config), config, msg, "failed", error)
                     prefs.incrementFailed()
                 }
@@ -308,13 +308,13 @@ object SmsSender {
         } catch (e: SecurityException) {
             abortSend(appContext, msg.id, probe)
             Log.e(TAG, "SecurityException sending SMS: ${e.message}")
-            LogStore.add("✗ SecurityException: ${e.message} to ${msg.to}\nMsg: \"${msg.message}\"")
+            LogStore.add("✗ SecurityException: ${e.message} to ${msg.to} [${msg.id}]")
             reportStatus(appContext, statusApi, config, msg, "failed", "SecurityException: ${e.message}")
             Prefs.getInstance(appContext).incrementFailed()
         } catch (e: Exception) {
             abortSend(appContext, msg.id, probe)
             Log.e(TAG, "Exception sending SMS: ${e.message}", e)
-            LogStore.add("✗ Exception: ${e.message} to ${msg.to}\nMsg: \"${msg.message}\"")
+            LogStore.add("✗ Exception: ${e.message} to ${msg.to} [${msg.id}]")
             reportStatus(appContext, statusApi, config, msg, "failed", e.message)
             Prefs.getInstance(appContext).incrementFailed()
         }
@@ -346,7 +346,7 @@ object SmsSender {
         val channelTag = if (isRcs) "RCS(SMS)" else "SMS"
         if (st.failed.get()) {
             val error = st.firstError ?: "UNKNOWN"
-            LogStore.add("✗ Failed [$channelTag] $error to ${msg.to}\nMsg: \"${msg.message}\"")
+            LogStore.add("✗ Failed [$channelTag] $error to ${msg.to} [${msg.id}]")
             prefs.incrementFailed()
             pendingDelivered.remove(msg.id)?.let { unregisterQuietly(appContext, it) }
             reportStatus(appContext, statusApi, config, msg, "failed", error)
