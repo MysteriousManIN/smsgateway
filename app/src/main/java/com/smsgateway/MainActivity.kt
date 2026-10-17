@@ -12,6 +12,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -99,6 +100,16 @@ class MainActivity : AppCompatActivity() {
         maybeLogBatteryHint()
         LogStore.add("App started — v1.0.0 multi-backend")
         handleCustomIntent(intent)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (prefs.isServiceEnabled() && !SmsForegroundService.isRunning && prefs.isConfigured()) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {
+                Log.d("SmsGateway", "Service is ON in prefs — auto-starting on app open")
+                SmsForegroundService.start(this)
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {

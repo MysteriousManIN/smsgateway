@@ -33,6 +33,33 @@ class SmsPollWorker(
             Log.d("SmsGateway", "Worker: service already running, skip")
             return Result.success()
         }
+        val db = AppDatabase.getInstance(ctx)
+        // Dispatch cached offline queue from Room DB first
+        try {
+            val cachedBatch = db.pendingSmsDao().getBatch(limit = 10)
+            for (item in cachedBatch) {
+                if (prefs.isQuotaBlocked()) break
+                val targetBackend = enabled.find { it.id == item.backendId }
+                val normTo = SmsValidator.normalizePhone(item.to) ?: item.to
+                val msg = SmsMessage(
+                    id = item.id,
+                    to = normTo,
+                    message = item.message,
+                    templateId = item.templateId,
+                    createdAt = item.createdAt,
+                    channel = item.channel
+                )
+                try {
+                    SmsSender.send(ctx, msg, targetBackend)
+                    db.pendingSmsDao().deleteById(item.id)
+                    kotlinx.coroutines.delay(prefs.smsThrottleDelayMs)
+                } catch (e: Exception) {
+                    Log.e("SmsGateway", "Worker send cached failed ${item.id}: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("SmsGateway", "Worker error dispatching cached Room queue: ${e.message}")
+        }
         var anyFail = false
         for (config in enabled) {
             if (config.lastStatus == SmsForegroundService.STATUS_AUTH_ERROR ||
