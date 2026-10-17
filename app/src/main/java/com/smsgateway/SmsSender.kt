@@ -1,4 +1,4 @@
-package com.smsgateway
+﻿package com.smsgateway
 
 import android.app.Activity
 import android.app.PendingIntent
@@ -444,63 +444,5 @@ object SmsSender {
                 // else: stays on disk for the next pass
             }
         }
-    }
-}
-
-/**
- * In-memory log store — last 50 entries for RecyclerView
- */
-object LogStore {
-    private val logs = mutableListOf<String>()
-    private val listeners = java.util.concurrent.CopyOnWriteArrayList<() -> Unit>()
-
-    @Synchronized
-    fun add(entry: String) {
-        val ts = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
-        logs.add(0, "[$ts] $entry")
-        if (logs.size > 50) logs.removeAt(logs.size - 1)
-        listeners.forEach { it.invoke() }
-        Log.d("SmsGateway", entry)
-    }
-
-    /**
-     * Heartbeat log line that updates in-place so polling activity is visible in real-time
-     * without pushing out valuable sent/failed logs from the 50-entry history.
-     */
-    @Synchronized
-    fun setHeartbeat(entry: String) {
-        val ts = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
-        val formatted = "[$ts] $entry"
-        val idx = logs.indexOfFirst { it.contains("Poll ") }
-        if (idx >= 0) {
-            logs[idx] = formatted
-        } else {
-            logs.add(0, formatted)
-            if (logs.size > 50) logs.removeAt(logs.size - 1)
-        }
-        listeners.forEach { it.invoke() }
-        Log.d("SmsGateway", entry)
-    }
-
-    @Synchronized
-    fun getAll(): List<String> = logs.toList()
-
-    fun addListener(l: () -> Unit) { listeners.add(l) }
-    fun removeListener(l: () -> Unit) { listeners.remove(l) }
-
-    @Synchronized
-    fun clear() { logs.clear(); listeners.forEach { it.invoke() } }
-
-    @Synchronized
-    fun clearMatching(predicate: (String) -> Boolean) {
-        logs.removeAll { predicate(it) }
-        listeners.forEach { it.invoke() }
-    }
-
-    @Synchronized
-    fun removeLogsContaining(query: String) {
-        if (query.isBlank()) return
-        logs.removeAll { it.contains(query, ignoreCase = true) }
-        listeners.forEach { it.invoke() }
     }
 }

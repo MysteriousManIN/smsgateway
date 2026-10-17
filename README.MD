@@ -14,32 +14,30 @@ Lightweight Android SMS gateway that sends SMS automatically through the phone's
 ┌────────────────────────────────────────────────────────────────────────┐
 │                      Backend / Application Server                      │
 │                                                                        │
-│ Backend Service ─► POST /api/v1/sms/send ───► [ sms_queue (pending) ]  │
-│                                                          ▲             │
-│   Audit UI    ◄─── GET /api/v1/sms/logs  ────────────────┤             │
-└──────────────────────────────────────────────────────────┼─────────────┘
-                                                           │ HTTPS
-                                                           │ (poll every 15s)
-┌──────────────────────────────────────────────────────────┼─────────────┐
-│                      Android Phone                       │             │
-│                                                          ▼             │
-│   SmsForegroundService ───────────────► GET /api/v1/sms/pending?limit=10
-│         │                                                │             │
-│         ▼                                                │             │
-│   SmsManager.sendTextMessage() (via SIM)                 │             │
-│         │                                                │             │
-│         ▼                                                │             │
-│   Report result ──────────────────────► POST /api/v1/sms/status        │
+│                         [ sms_queue (pending) ]                        │
+└────────────────────────────────────┬───────────────────────────────────┘
+                                     │ HTTPS
+                                     │ (poll every 15s)
+┌────────────────────────────────────┼───────────────────────────────────┐
+│                      Android Phone │                                   │
+│                                    ▼                                   │
+│   SmsForegroundService ──────► GET /api/v1/sms/pending?limit=10        │
+│         │                                                              │
+│         ▼                                                              │
+│   SmsManager.sendTextMessage() (via SIM)                               │
+│         │                                                              │
+│         ▼                                                              │
+│   Report result ─────────────► POST /api/v1/sms/status                 │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Flow summary
 
-1. **Enqueue:** Your backend server calls `POST /api/v1/sms/send` to insert a message with status `pending` into `sms_queue`.
+1. **Queue:** Messages with status `pending` are stored in the backend's `sms_queue`.
 2. **Poll:** The phone's foreground service polls `GET /api/v1/sms/pending?limit=10` every 15 seconds for each enabled gateway.
 3. **Dispatch:** The phone sends the message via SIM using `SmsManager` (multipart is handled automatically for messages over 160 GSM characters).
 4. **Status update:** The phone posts the result (`sent`, `failed`, or `delivered`) to `POST /api/v1/sms/status`.
-5. **Audit:** Query `GET /api/v1/sms/logs` to review delivery history.
+
 
 ---
 
@@ -104,12 +102,10 @@ The service switch state is persisted:
 
 ## 4. Backend API Reference
 
-Your backend must implement 4 REST endpoints:
+Your backend must implement 2 REST endpoints:
 
 1. `GET /api/v1/sms/pending` — polled by the phone
 2. `POST /api/v1/sms/status` — delivery reports from the phone
-3. `POST /api/v1/sms/send` — enqueue (called by your backend server)
-4. `GET /api/v1/sms/logs` — audit history (called by dashboards)
 
 ### 4.1 GET /api/v1/sms/pending
 
@@ -174,64 +170,6 @@ curl -X POST "https://api.yourdomain.com/api/v1/sms/status" \
   -H "Authorization: Bearer YOUR_SMS_GATEWAY_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{ "id": "c7a10f82-938a-4d24-81eb-987814b7e120", "status": "sent" }'
-```
-
-### 4.3 POST /api/v1/sms/send
-
-Called by your backend server to queue a message. (The phone never calls this.)
-
-```json
-{
-  "to": "919876543210",
-  "message": "Dear Parent, your child was marked present today at 08:30 AM.",
-  "templateId": "DLT_ATTENDANCE_01",
-  "priority": "normal"
-}
-```
-
-| Field | Required | Default | Validation |
-|---|---|---|---|
-| `to` | Yes | — | `^[0-9]{10,15}$` |
-| `message` | Yes | — | 1–1000 chars (GSM-7 / Unicode auto-handled) |
-| `templateId` | No | `null` | DLT template ID (India telecom compliance) |
-| `priority` | No | `"normal"` | `"normal"` or `"high"` |
-
-Response `201 Created`:
-
-```json
-{
-  "id": "c7a10f82-938a-4d24-81eb-987814b7e120",
-  "status": "pending",
-  "to": "919876543210",
-  "created_at": "2026-09-19T10:00:00.000Z"
-}
-```
-
-### 4.4 GET /api/v1/sms/logs
-
-For admin panels / audit dashboards.
-
-- **Query:** `status` (`pending|sent|failed|delivered`), `page` (default `1`), `limit` (default `20`, max `100`)
-
-Response `200 OK`:
-
-```json
-{
-  "data": [
-    {
-      "id": "c7a10f82-938a-4d24-81eb-987814b7e120",
-      "to": "919876543210",
-      "message": "Your OTP verification code is 482913. Valid for 10 mins.",
-      "status": "sent",
-      "error": null,
-      "created_at": "2026-09-19T10:00:00.000Z",
-      "updated_at": "2026-09-19T10:00:15.000Z"
-    }
-  ],
-  "total": 142,
-  "page": 1,
-  "limit": 20
-}
 ```
 
 ---
@@ -351,7 +289,11 @@ android-sms-gateway/
 │   ├── MainActivity.kt          # drawer + tabs, permissions, network banner
 │   ├── HomeFragment.kt          # stats + service start/stop
 │   ├── GatewaysFragment.kt      # gateway CRUD + connection test
-│   ├── LogsFragment.kt          # in-memory log viewer (last 50)
+│   ├── LogsFragment.kt          # offline log viewer (Room Database)
+│   ├── LogStore.kt              # Room-backed offline log store + in-memory cache
+│   ├── LogEntry.kt              # Room entity for persistent logs
+│   ├── LogDao.kt                # Room DAO for log queries, inserts, and cleanup
+│   ├── AppDatabase.kt           # Room Database (sandesh_logs.db)
 │   ├── SettingsFragment.kt      # service switch, SIM picker, battery, theme
 │   ├── SmsForegroundService.kt  # 15s polling loop, persistent notification
 │   ├── SmsPollWorker.kt         # WorkManager 15-min fallback

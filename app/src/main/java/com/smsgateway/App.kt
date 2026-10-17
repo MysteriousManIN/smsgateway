@@ -13,6 +13,7 @@ class App : Application() {
         }
         AppCompatDelegate.setDefaultNightMode(mode)
         super.onCreate()
+        LogStore.init(this)
         Log.d("SmsGateway", "App onCreate — sms gateway v1.0.0 multi-backend")
         // ponytail: auto-seed 2 dummy gateways for fresh installs to demo multi-backend (remove after verification if unwanted)
         try {

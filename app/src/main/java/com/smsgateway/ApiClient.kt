@@ -178,40 +178,6 @@ data class StatusResponse(
     val ok: Boolean = true
 )
 
-@JsonClass(generateAdapter = true)
-data class SendRequest(
-    val to: String,
-    val message: String,
-    val templateId: String? = null,
-    val priority: String = "normal"
-)
-
-@JsonClass(generateAdapter = true)
-data class SendResponse(
-    val id: String,
-    val status: String,
-    val to: String,
-    @Json(name = "created_at") val created_at: String? = null
-)
-
-@JsonClass(generateAdapter = true)
-data class LogsResponse(
-    val data: List<SmsLogItem> = emptyList(),
-    val total: Int = 0,
-    val page: Int = 1,
-    val limit: Int = 20
-)
-
-@JsonClass(generateAdapter = true)
-data class SmsLogItem(
-    val id: String,
-    val to: String,
-    val message: String,
-    val status: String,
-    val error: String? = null,
-    @Json(name = "created_at") val createdAt: String? = null,
-    @Json(name = "updated_at") val updatedAt: String? = null
-)
 
 interface SmsApi {
     @GET("pending")
@@ -222,17 +188,6 @@ interface SmsApi {
 
     @POST("status")
     suspend fun postStatus(@Body body: StatusRequest): StatusResponse
-
-    @POST("send")
-    suspend fun sendSms(@Body body: SendRequest): SendResponse
-
-    @GET("logs")
-    suspend fun getLogs(
-        @Query("status") status: String? = null,
-        @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 20,
-        @Query("_t") timestamp: Long = System.currentTimeMillis()
-    ): LogsResponse
 }
 
 /**
