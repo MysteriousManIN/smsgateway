@@ -72,6 +72,20 @@ class GatewayAdapter(
             onToggle(c, checked)
         }
 
+        // Per-gateway dashboard metrics
+        val ctx = holder.itemView.context
+        val prefs = Prefs.getInstance(ctx)
+        val stats = prefs.getGatewayStats(c.id)
+        holder.tvSentFailedToday.text = "${stats.sentToday} sent • ${stats.failedToday} failed"
+        holder.tvSuccessRate.text = stats.successRate
+        holder.tvAvgLatency.text = if (stats.avgLatencyMs > 0) "${stats.avgLatencyMs} ms" else "— ms"
+
+        val sm = ctx.getSystemService(android.telephony.SubscriptionManager::class.java)
+        val activeSims = try { sm?.activeSubscriptionInfoList?.size ?: 1 } catch (_: Exception) { 1 }
+        val quotaLeft = prefs.getQuotaLeft(activeSims)
+        val baseQuota = if (prefs.simSubscriptionId == Prefs.SIM_MODE_AUTO_ROTATE) 30 * activeSims.coerceAtLeast(1) else 30
+        holder.tvQuotaLeft.text = if (prefs.isQuotaBlocked()) "Paused (0 left)" else "$quotaLeft / $baseQuota left"
+
         // ponytail: Test Send removed from card — only Connection remains
         holder.btnTest.setOnClickListener { onTest(c) }
         holder.btnEdit.setOnClickListener { onEdit(c) }
@@ -89,6 +103,10 @@ class GatewayAdapter(
         val tvStatus: TextView = view.findViewById(R.id.tvStatus)
         val dot: View = view.findViewById(R.id.dotStatus)
         val leftBar: View = view.findViewById(R.id.leftBar)
+        val tvSentFailedToday: TextView = view.findViewById(R.id.tvSentFailedToday)
+        val tvSuccessRate: TextView = view.findViewById(R.id.tvSuccessRate)
+        val tvAvgLatency: TextView = view.findViewById(R.id.tvAvgLatency)
+        val tvQuotaLeft: TextView = view.findViewById(R.id.tvQuotaLeft)
         val switchEnabled: SwitchMaterial = view.findViewById(R.id.switchEnabled)
         val btnTest: MaterialButton = view.findViewById(R.id.btnTest)
         val btnEdit: MaterialButton = view.findViewById(R.id.btnEdit)

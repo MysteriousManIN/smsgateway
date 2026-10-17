@@ -13,16 +13,19 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
+import kotlinx.coroutines.launch
 
 class LogsFragment : Fragment() {
 
     private lateinit var rvLogs: RecyclerView
     private lateinit var etSearch: EditText
     private lateinit var btnSearchClear: ImageView
+    private lateinit var btnExportLogs: MaterialButton
     private lateinit var btnClearLogs: MaterialButton
     private lateinit var tvEmptyLogs: TextView
     private lateinit var tvLogsCount: TextView
@@ -47,6 +50,7 @@ class LogsFragment : Fragment() {
         rvLogs = view.findViewById(R.id.rvLogs)
         etSearch = view.findViewById(R.id.etSearch)
         btnSearchClear = view.findViewById(R.id.btnSearchClear)
+        btnExportLogs = view.findViewById(R.id.btnExportLogs)
         btnClearLogs = view.findViewById(R.id.btnClearLogs)
         tvEmptyLogs = view.findViewById(R.id.tvEmptyLogs)
         tvLogsCount = view.findViewById(R.id.tvLogsCount)
@@ -72,11 +76,29 @@ class LogsFragment : Fragment() {
             etSearch.text.clear()
         }
 
+        btnExportLogs.setOnClickListener {
+            exportLogs()
+        }
+
         btnClearLogs.setOnClickListener {
             showClearLogsConfirmation()
         }
 
         applyLogFilter()
+    }
+
+    private fun exportLogs() {
+        if (allLogs.isEmpty()) {
+            Toast.makeText(requireContext(), "No logs available to export", Toast.LENGTH_SHORT).show()
+            return
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            Toast.makeText(requireContext(), "Exporting CSV...", Toast.LENGTH_SHORT).show()
+            val ok = LogExporter.exportAndShare(requireContext())
+            if (!ok) {
+                Toast.makeText(requireContext(), "Failed to export logs", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     override fun onResume() {

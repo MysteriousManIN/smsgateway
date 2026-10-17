@@ -28,6 +28,12 @@ interface LogDao {
     @Query("DELETE FROM logs")
     suspend fun clearAll()
 
+    @Query("DELETE FROM logs WHERE timestamp < :cutoffTimestamp")
+    suspend fun deleteOlderThan(cutoffTimestamp: Long): Int
+
+    @Query("DELETE FROM logs WHERE id NOT IN (SELECT id FROM logs ORDER BY id DESC LIMIT :maxRows)")
+    suspend fun trimToMaxRows(maxRows: Int): Int
+
     @Query("SELECT COUNT(*) FROM logs")
     suspend fun count(): Int
 }

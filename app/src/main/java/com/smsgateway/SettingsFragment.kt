@@ -38,6 +38,7 @@ class SettingsFragment : Fragment() {
     private lateinit var switchBattery: SwitchMaterial
     private lateinit var tvSimInfo: TextView
     private lateinit var simContainer: LinearLayout
+    private lateinit var tvQuotaStatus: TextView
 
     private val requestPhoneLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -58,6 +59,7 @@ class SettingsFragment : Fragment() {
         prefs = Prefs.getInstance(requireContext())
         tvBatteryStatus = view.findViewById(R.id.tvBatteryStatus)
         tvPollingInfo = view.findViewById(R.id.tvPollingInfo)
+        tvQuotaStatus = view.findViewById(R.id.tvQuotaStatus)
         switchService = view.findViewById(R.id.switchService)
         switchBattery = view.findViewById(R.id.switchBattery)
         tvSimInfo = view.findViewById(R.id.tvSimInfo)
@@ -114,6 +116,26 @@ class SettingsFragment : Fragment() {
             }
         }
 
+        // SMS Dispatch Throttle selector
+        val rgThrottle = view.findViewById<RadioGroup>(R.id.rgThrottle)
+        val rbThrottle500 = view.findViewById<MaterialRadioButton>(R.id.rbThrottle500)
+        val rbThrottle1000 = view.findViewById<MaterialRadioButton>(R.id.rbThrottle1000)
+        val rbThrottle2000 = view.findViewById<MaterialRadioButton>(R.id.rbThrottle2000)
+
+        when (prefs.smsThrottleDelayMs) {
+            500L -> rbThrottle500.isChecked = true
+            2000L -> rbThrottle2000.isChecked = true
+            else -> rbThrottle1000.isChecked = true
+        }
+
+        rgThrottle.setOnCheckedChangeListener { _, checkedId ->
+            prefs.smsThrottleDelayMs = when (checkedId) {
+                R.id.rbThrottle500 -> 500L
+                R.id.rbThrottle2000 -> 2000L
+                else -> 1000L
+            }
+        }
+
         // also keep legacy btnBattery if exists (gone)
         view.findViewById<MaterialButton>(R.id.btnBattery)?.setOnClickListener { requestBatteryExemption() }
 
@@ -159,6 +181,25 @@ class SettingsFragment : Fragment() {
         tvPollingInfo.text = "Polls $enabled enabled gateway(s) every 15s. Failures isolated per backend."
         // stats hidden but keep for compat
         view?.findViewById<TextView>(R.id.tvStatsSummary)?.text = "Sent: ${prefs.sentCount} • Failed: ${prefs.failedCount} • Gateways: $enabled/${prefs.getBackends().size} active"
+
+        // OS Quota status
+        if (::tvQuotaStatus.isInitialized) {
+            if (prefs.isQuotaBlocked()) {
+                val remainingSec = (prefs.quotaBlockedUntil - System.currentTimeMillis()) / 1000
+                val remMin = (remainingSec / 60).coerceAtLeast(1)
+                tvQuotaStatus.text = "⚠️ OS Quota Limit Hit: Paused (~$remMin min remaining). Tap to reset."
+                tvQuotaStatus.setTextColor(android.graphics.Color.parseColor("#DC2626"))
+                tvQuotaStatus.setOnClickListener {
+                    prefs.clearQuotaBlock()
+                    Toast.makeText(requireContext(), "Quota block reset manually", Toast.LENGTH_SHORT).show()
+                    refresh()
+                }
+            } else {
+                tvQuotaStatus.text = "OS Quota: Normal ✓ (limit ~30/15min)"
+                tvQuotaStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_muted))
+                tvQuotaStatus.setOnClickListener(null)
+            }
+        }
     }
 
     // ---------- SIM selection ----------
@@ -186,6 +227,14 @@ class SettingsFragment : Fragment() {
         }
         tvSimInfo.text = if (subs.size == 1) "1 SIM found — tap to select" else "${subs.size} SIMs found — tap to select"
         addSimRow("System default", "Let Android choose the SMS SIM", -1, selected == -1)
+        if (subs.size >= 2) {
+            addSimRow(
+                "Auto-rotate SIMs (Round-robin)",
+                "Alternates across ${subs.size} active SIMs to balance OS quota (~${30 * subs.size}/15min)",
+                Prefs.SIM_MODE_AUTO_ROTATE,
+                selected == Prefs.SIM_MODE_AUTO_ROTATE
+            )
+        }
         for (s in subs) {
             val (title, subtitle) = simLabel(s)
             addSimRow(title, subtitle, s.subscriptionId, selected == s.subscriptionId)
@@ -255,8 +304,18 @@ class SettingsFragment : Fragment() {
                 }
             } else {
                 prefs.simSubscriptionId = id
-                prefs.simDisplayName = if (id == -1) null else title
-                LogStore.add(if (id == -1) "SIM: system default selected" else "SIM selected: $title")
+                prefs.simDisplayName = when (id) {
+                    -1 -> null
+                    Prefs.SIM_MODE_AUTO_ROTATE -> "Auto-rotate SIMs"
+                    else -> title
+                }
+                LogStore.add(
+                    when (id) {
+                        -1 -> "SIM: system default selected"
+                        Prefs.SIM_MODE_AUTO_ROTATE -> "SIM: Auto-rotate multi-SIM selected"
+                        else -> "SIM selected: $title"
+                    }
+                )
                 renderSimSection()
             }
         }

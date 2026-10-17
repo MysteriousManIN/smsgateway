@@ -223,12 +223,9 @@ object ApiClient {
     fun forConfig(config: BackendConfig): SmsApi {
         val baseUrl = config.normalizedBaseUrl()
             ?: throw IllegalStateException("Backend ${config.name} URL must start with https://")
-        val fingerprint = baseUrl + "|" + config.token
+        val fingerprint = baseUrl + "|" + config.token + "|" + (config.certPin ?: "")
         synchronized(lock) {
             val cached = cache[config.id]
-            // Return cached entry only if URL/token are unchanged; otherwise rebuild.
-            // This makes hot paths (per-poll status writes) cheap even without
-            // explicit invalidation, and user edits take effect immediately.
             if (cached != null && fingerprints[config.id] == fingerprint) return cached
 
             val moshi = newAppMoshi()
@@ -246,6 +243,20 @@ object ApiClient {
                 .readTimeout(15, TimeUnit.SECONDS)
                 .writeTimeout(15, TimeUnit.SECONDS)
                 .addInterceptor(authInterceptor)
+
+            if (!config.certPin.isNullOrBlank()) {
+                try {
+                    val host = java.net.URI(baseUrl).host
+                    if (!host.isNullOrBlank()) {
+                        val pinner = okhttp3.CertificatePinner.Builder()
+                            .add(host, config.certPin.trim())
+                            .build()
+                        builder.certificatePinner(pinner)
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("SmsApi", "Invalid certPin: ${e.message}")
+                }
+            }
             if (BuildConfig.DEBUG) {
                 val logging = HttpLoggingInterceptor(RedactingLogger).apply {
                     level = HttpLoggingInterceptor.Level.BODY

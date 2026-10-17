@@ -209,6 +209,96 @@
             android:layout_marginTop="4dp"
             android:layout_marginBottom="16dp" />
 
+        <!-- SMS Dispatch Throttle & Quota -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="0dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp"
+            app:strokeColor="@color/border"
+            app:cardBackgroundColor="@color/bg_light"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="SMS Dispatch Rate &amp; Throttle"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_dark"
+                    android:fontFamily="@font/dm_sans"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvThrottleDesc"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Delay between outgoing SMS to prevent OS rate limit blocks."
+                    android:textSize="12sp"
+                    android:textColor="@color/text_muted"
+                    android:fontFamily="@font/dm_sans"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginBottom="8dp" />
+
+                <RadioGroup
+                    android:id="@+id/rgThrottle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <com.google.android.material.radiobutton.MaterialRadioButton
+                        android:id="@+id/rbThrottle500"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Fast (500ms delay)"
+                        android:textSize="14sp"
+                        android:textColor="@color/text_dark"
+                        android:fontFamily="@font/dm_sans" />
+
+                    <com.google.android.material.radiobutton.MaterialRadioButton
+                        android:id="@+id/rbThrottle1000"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Standard (1000ms delay — recommended)"
+                        android:textSize="14sp"
+                        android:textColor="@color/text_dark"
+                        android:fontFamily="@font/dm_sans" />
+
+                    <com.google.android.material.radiobutton.MaterialRadioButton
+                        android:id="@+id/rbThrottle2000"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Safe / Bulk (2000ms delay)"
+                        android:textSize="14sp"
+                        android:textColor="@color/text_dark"
+                        android:fontFamily="@font/dm_sans" />
+                </RadioGroup>
+
+                <TextView
+                    android:id="@+id/tvQuotaStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="OS Quota: Normal"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_muted"
+                    android:fontFamily="@font/dm_sans"
+                    android:layout_marginTop="8dp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/border"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="16dp" />
+
         <!-- Theme / Appearance — System default / Light / Dark sharp monochrome -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"

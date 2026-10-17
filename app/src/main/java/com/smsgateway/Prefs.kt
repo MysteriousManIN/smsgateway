@@ -62,6 +62,7 @@ class Prefs private constructor(context: Context) {
     private val moshi: Moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
     private val listType = Types.newParameterizedType(List::class.java, BackendConfig::class.java)
     private val adapter = moshi.adapter<List<BackendConfig>>(listType)
+    private val statsAdapter = moshi.adapter(GatewayStats::class.java)
 
     // theme mode
     var themeMode: Int
@@ -107,10 +108,71 @@ class Prefs private constructor(context: Context) {
         get() = prefs.getString(KEY_SIM_NAME, null)
         set(v) { prefs.edit().putString(KEY_SIM_NAME, v).apply() }
 
+    // --- Multi-SIM round-robin rotation (-2 = auto-rotate) ---
+    var simRotationIndex: Int
+        get() = prefs.getInt(KEY_SIM_ROTATION_INDEX, 0)
+        set(v) { prefs.edit().putInt(KEY_SIM_ROTATION_INDEX, v).apply() }
+
+    @Synchronized
+    fun getNextRotatedSimSubId(availableSubIds: List<Int>): Int {
+        if (availableSubIds.isEmpty()) return -1
+        val idx = Math.abs(simRotationIndex) % availableSubIds.size
+        val chosen = availableSubIds[idx]
+        simRotationIndex = (idx + 1) % availableSubIds.size
+        return chosen
+    }
+
     // --- permission bookkeeping ---
     var permSmsAsked: Boolean
         get() = prefs.getBoolean(KEY_PERM_SMS_ASKED, false)
         set(v) { prefs.edit().putBoolean(KEY_PERM_SMS_ASKED, v).apply() }
+
+    // --- configurable SMS dispatch throttle delay (default 1000ms) ---
+    var smsThrottleDelayMs: Long
+        get() = prefs.getLong(KEY_SMS_THROTTLE_DELAY, 1000L)
+        set(v) { prefs.edit().putLong(KEY_SMS_THROTTLE_DELAY, v.coerceAtLeast(100L)).apply() }
+
+    // --- OS SMS quota limit (~30/15 min) cooldown ---
+    var quotaBlockedUntil: Long
+        get() = prefs.getLong(KEY_QUOTA_BLOCKED_UNTIL, 0L)
+        set(v) { prefs.edit().putLong(KEY_QUOTA_BLOCKED_UNTIL, v).apply() }
+
+    fun isQuotaBlocked(): Boolean = System.currentTimeMillis() < quotaBlockedUntil
+
+    fun clearQuotaBlock() {
+        quotaBlockedUntil = 0L
+    }
+
+    // --- Quota tracking (rolling 15m window) ---
+    @Synchronized
+    fun recordSmsSentTimestamp() {
+        val now = System.currentTimeMillis()
+        val cutoff = now - 15 * 60 * 1000L
+        val raw = prefs.getString(KEY_SMS_SENT_TIMESTAMPS, "") ?: ""
+        val timestamps = raw.split(",")
+            .mapNotNull { it.trim().toLongOrNull() }
+            .filter { it >= cutoff }
+            .toMutableList()
+        timestamps.add(now)
+        val pruned = if (timestamps.size > 100) timestamps.takeLast(100) else timestamps
+        prefs.edit().putString(KEY_SMS_SENT_TIMESTAMPS, pruned.joinToString(",")).apply()
+    }
+
+    @Synchronized
+    fun getSmsSentInLast15Minutes(): Int {
+        val cutoff = System.currentTimeMillis() - 15 * 60 * 1000L
+        val raw = prefs.getString(KEY_SMS_SENT_TIMESTAMPS, "") ?: ""
+        return raw.split(",")
+            .mapNotNull { it.trim().toLongOrNull() }
+            .count { it >= cutoff }
+    }
+
+    fun getQuotaLeft(activeSimCount: Int = 1): Int {
+        if (isQuotaBlocked()) return 0
+        val baseLimit = if (simSubscriptionId == SIM_MODE_AUTO_ROTATE) 30 * activeSimCount.coerceAtLeast(1) else 30
+        val used = getSmsSentInLast15Minutes()
+        return (baseLimit - used).coerceAtLeast(0)
+    }
 
     // --- multi-backend ---
     @Synchronized
@@ -342,10 +404,82 @@ class Prefs private constructor(context: Context) {
     fun incrementSent() { sentCount = sentCount + 1 }
     fun incrementFailed() { failedCount = failedCount + 1 }
 
+    // --- Per-Gateway dashboard statistics ---
+    private fun getTodayDate(): String =
+        java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+
+    @Synchronized
+    fun getGatewayStats(backendId: String): GatewayStats {
+        val key = KEY_GW_STATS_PREFIX + backendId
+        val json = prefs.getString(key, null)
+        val today = getTodayDate()
+        if (json.isNullOrBlank()) {
+            return GatewayStats(lastDate = today)
+        }
+        val stats = try {
+            statsAdapter.fromJson(json) ?: GatewayStats(lastDate = today)
+        } catch (_: Exception) {
+            GatewayStats(lastDate = today)
+        }
+        return if (stats.lastDate != today) {
+            val rolled = stats.copy(sentToday = 0, failedToday = 0, lastDate = today)
+            prefs.edit().putString(key, statsAdapter.toJson(rolled)).apply()
+            rolled
+        } else {
+            stats
+        }
+    }
+
+    @Synchronized
+    fun recordGatewaySent(backendId: String, latencyMs: Long? = null) {
+        val stats = getGatewayStats(backendId)
+        val updated = if (latencyMs != null && latencyMs > 0) {
+            stats.copy(
+                sentToday = stats.sentToday + 1,
+                totalSent = stats.totalSent + 1,
+                totalLatencyMs = stats.totalLatencyMs + latencyMs,
+                latencyCount = stats.latencyCount + 1,
+                lastLatencyMs = latencyMs
+            )
+        } else {
+            stats.copy(
+                sentToday = stats.sentToday + 1,
+                totalSent = stats.totalSent + 1
+            )
+        }
+        prefs.edit().putString(KEY_GW_STATS_PREFIX + backendId, statsAdapter.toJson(updated)).apply()
+        incrementSent()
+        recordSmsSentTimestamp()
+    }
+
+    @Synchronized
+    fun recordGatewayFailed(backendId: String) {
+        val stats = getGatewayStats(backendId)
+        val updated = stats.copy(
+            failedToday = stats.failedToday + 1,
+            totalFailed = stats.totalFailed + 1
+        )
+        prefs.edit().putString(KEY_GW_STATS_PREFIX + backendId, statsAdapter.toJson(updated)).apply()
+        incrementFailed()
+    }
+
+    @Synchronized
+    fun recordGatewayLatency(backendId: String, latencyMs: Long) {
+        if (latencyMs <= 0) return
+        val stats = getGatewayStats(backendId)
+        val updated = stats.copy(
+            totalLatencyMs = stats.totalLatencyMs + latencyMs,
+            latencyCount = stats.latencyCount + 1,
+            lastLatencyMs = latencyMs
+        )
+        prefs.edit().putString(KEY_GW_STATS_PREFIX + backendId, statsAdapter.toJson(updated)).apply()
+    }
+
     companion object {
         const val THEME_SYSTEM = 0
         const val THEME_LIGHT = 1
         const val THEME_DARK = 2
+        const val SIM_MODE_AUTO_ROTATE = -2
 
         private const val TAG = "SmsGateway"
         private const val KEYSET_PREF_NAME = "__androidx_security_crypto_encrypted_prefs_key_keyset__"
@@ -363,9 +497,14 @@ class Prefs private constructor(context: Context) {
         private const val KEY_SERVICE_ENABLED = "service_enabled"
         private const val KEY_SIM_SUB_ID = "sim_sub_id"
         private const val KEY_SIM_NAME = "sim_name"
+        private const val KEY_SIM_ROTATION_INDEX = "sim_rotation_index"
+        private const val KEY_SMS_SENT_TIMESTAMPS = "sms_sent_timestamps"
+        private const val KEY_GW_STATS_PREFIX = "gw_stats_"
         private const val KEY_PERM_SMS_ASKED = "perm_sms_asked"
         private const val KEY_ACKED_IDS = "acked_msg_ids"
         private const val KEY_PENDING_STATUS = "pending_status_outbox"
+        private const val KEY_SMS_THROTTLE_DELAY = "sms_throttle_delay_ms"
+        private const val KEY_QUOTA_BLOCKED_UNTIL = "quota_blocked_until"
         private const val MAX_ACKED_IDS = 300
         private const val MAX_PENDING_STATUS = 200
 

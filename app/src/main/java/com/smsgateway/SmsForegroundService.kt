@@ -24,10 +24,11 @@ class SmsForegroundService : Service() {
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var pollingJob: Job? = null
+    private val backendFailureSince = mutableMapOf<String, Long>()
 
     override fun onCreate() {
         super.onCreate()
-        createNotificationChannel()
+        NotificationHelper.createChannels(this)
         isRunning = true
         Log.d(TAG, "Service onCreate")
     }
@@ -35,7 +36,6 @@ class SmsForegroundService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
             Log.d(TAG, "Stop action received")
-            // User tapped Stop in notification — persist OFF so reboot stays OFF.
             try { Prefs.getInstance(this).serviceEnabled = false } catch (_: Exception) {}
             stopSelf()
             return START_NOT_STICKY
@@ -66,8 +66,6 @@ class SmsForegroundService : Service() {
             return START_STICKY
         }
 
-        // Normal / boot start — persist ON so reboot restores it.
-        // BootReceiver only calls this when flag is already ON, so this is idempotent.
         try { Prefs.getInstance(this).serviceEnabled = true } catch (_: Exception) {}
 
         startForeground(NOTIF_ID, buildNotification("Starting…", 0, 0, 0))
@@ -89,19 +87,23 @@ class SmsForegroundService : Service() {
         return START_STICKY
     }
 
+    private fun getBackendAlertId(backendId: String): Int {
+        return NotificationHelper.NOTIF_ID_BACKEND_ALERT_BASE + (backendId.hashCode() and 0x7FFF)
+    }
+
     private suspend fun pollingLoop() {
-        var backoffMs = 15_000L
         val prefs = Prefs.getInstance(this)
-        Log.d(TAG, "Polling loop started — 15s interval, multi-backend")
+        val db = AppDatabase.getInstance(this)
+        Log.d(TAG, "Polling loop started — offline Room queue + multi-backend")
+
         while (currentCoroutineContext().isActive) {
-            // Doze/deep-sleep would freeze delay() timers: hold a short
-            // PARTIAL_WAKE_LOCK per pass (auto-released by timeout — no leak).
             try {
                 val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
                 pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Sandesh:poll").apply {
                     acquire(60_000L)
                 }
             } catch (_: Exception) {}
+
             try {
                 val enabled = prefs.getEnabledBackends()
                 if (enabled.isEmpty()) {
@@ -110,129 +112,158 @@ class SmsForegroundService : Service() {
                     delay(15_000)
                     continue
                 }
-                if (!isNetworkAvailable()) {
-                    Log.d(TAG, "No network — backoff 30s")
-                    LogStore.add("No network — waiting 30s")
-                    updateNotification("Offline — retry 30s", prefs.sentCount, prefs.failedCount, enabled.size)
-                    delay(30_000)
-                    continue
-                }
 
-                var totalPending = 0
-                var anySuccess = false
+                val isOnline = isNetworkAvailable()
                 var lastPollStr = ""
 
-                for (config in enabled) {
-                    // Skip backends stuck in auth/config error until re-tested or edited.
-                    if (config.lastStatus == STATUS_AUTH_ERROR || config.lastStatus == STATUS_CONFIG_ERROR) {
-                        Log.d(TAG, "Skip ${config.name} (${config.lastStatus}) — re-test to resume")
-                        continue
-                    }
-                    try {
-                        Log.d(TAG, "Polling backend: ${config.name} (${config.baseUrl})")
-                        // Deliver any status reports queued while offline/restarts first.
-                        SmsSender.flushPendingStatuses(this, config)
-                        val api = ApiClient.forConfig(config)
-                        val pending = api.getPending(limit = 10)
-                        val now = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
-                        lastPollStr = now
-                        prefs.lastPoll = now
-
-                        val unacked = pending.messages.filterNot { prefs.isAcked(it.id) }
-                        prefs.pendingCount = pending.messages.size
-
-                        if (pending.messages.isEmpty()) {
-                            Log.d(TAG, "Poll ${config.name} $now — 0 pending")
-                            LogStore.setHeartbeat("Poll ${config.name} — 0 pending (queue empty)")
-                            prefs.setBackendStatus(config.id, "ok")
-                        } else if (unacked.isEmpty()) {
-                            Log.d(TAG, "Poll ${config.name} $now — ${pending.messages.size} pending (all already acked)")
-                            LogStore.setHeartbeat("Poll ${config.name} — ${pending.messages.size} pending (already acked)")
-                            prefs.setBackendStatus(config.id, "ok")
-                        } else {
-                            Log.d(TAG, "Poll ${config.name} $now — ${pending.messages.size} pending (${unacked.size} new)")
-                            LogStore.add("Poll ${config.name} $now — ${unacked.size} new message(s) to dispatch")
-                            totalPending += unacked.size
-                            for (msg in pending.messages) {
-                                if (prefs.isAcked(msg.id)) {
-                                    Log.d(TAG, "Skip already-acked id=${msg.id}")
-                                    continue
-                                }
-                                val normalizedTo = SmsValidator.normalizePhone(msg.to)
-                                if (normalizedTo == null || !SmsValidator.isValidMessage(msg.message)) {
-                                    Log.w(TAG, "Skip invalid message id=${msg.id} to='${msg.to}'")
-                                    LogStore.add("! Skip invalid message to '${msg.to}' [${msg.id}]")
-                                    try {
-                                        api.postStatus(
-                                            StatusRequest(
-                                                msg.id, "failed",
-                                                "Invalid phone format or message body",
-                                                channel = msg.channel ?: "sms"
-                                            )
-                                        )
-                                    } catch (_: Exception) {}
-                                    continue
-                                }
-                                SmsSender.send(this, msg.copy(to = normalizedTo), config)
-                                delay(500)
-                            }
-                            prefs.setBackendStatus(config.id, "ok")
+                // ---------------- STEP 1: Fetch-ahead into Room (Online only) ----------------
+                if (isOnline) {
+                    for (config in enabled) {
+                        if (config.lastStatus == STATUS_AUTH_ERROR || config.lastStatus == STATUS_CONFIG_ERROR) {
+                            Log.d(TAG, "Skip ${config.name} (${config.lastStatus}) — re-test to resume")
+                            continue
                         }
-                        anySuccess = true
-                    } catch (e: HttpException) {
-                        // HTTP-aware: auth/config errors are NOT transient — stop
-                        // hammering this backend until the user re-tests it.
-                        when (e.code()) {
-                            401, 403 -> {
-                                Log.e(TAG, "Auth failed backend ${config.name} (${e.code()}) — pausing backend")
-                                LogStore.add("! ${config.name}: token rejected (${e.code()}) — check token, then Test")
-                                prefs.setBackendStatus(config.id, STATUS_AUTH_ERROR)
+                        try {
+                            Log.d(TAG, "Polling backend: ${config.name} (${config.baseUrl})")
+                            // Deliver pending outbox delivery reports
+                            SmsSender.flushPendingStatuses(this, config)
+
+                            val api = ApiClient.forConfig(config)
+                            val callStart = System.currentTimeMillis()
+                            val pending = api.getPending(limit = 25)
+                            val latencyMs = System.currentTimeMillis() - callStart
+                            prefs.recordGatewayLatency(config.id, latencyMs)
+                            val now = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
+                            lastPollStr = now
+                            prefs.lastPoll = now
+
+                            val unacked = pending.messages.filterNot { prefs.isAcked(it.id) }
+                            if (unacked.isNotEmpty()) {
+                                val entities = unacked.map { msg ->
+                                    PendingSmsEntity(
+                                        id = msg.id,
+                                        backendId = config.id,
+                                        to = msg.to,
+                                        message = msg.message,
+                                        templateId = msg.templateId,
+                                        createdAt = msg.createdAt,
+                                        channel = msg.channel
+                                    )
+                                }
+                                val inserted = db.pendingSmsDao().insertAll(entities)
+                                Log.d(TAG, "Cached ${inserted.size} messages to Room from ${config.name}")
                             }
-                            404 -> {
-                                Log.e(TAG, "Not found backend ${config.name} — pausing backend")
-                                LogStore.add("! ${config.name}: 404 — check Base URL, then Test")
-                                prefs.setBackendStatus(config.id, STATUS_CONFIG_ERROR)
+
+                            // Successful poll: clear failure tracker and cancel alerts if any
+                            val hadFailure = backendFailureSince.remove(config.id)
+                            if (hadFailure != null) {
+                                NotificationHelper.cancelAlert(this, getBackendAlertId(config.id))
                             }
-                            else -> {
-                                Log.e(TAG, "HTTP ${e.code()} backend ${config.name}: ${e.message}")
-                                LogStore.add("Server error ${config.name}: HTTP ${e.code()}")
-                                prefs.setBackendStatus(config.id, "fail")
+                            prefs.setBackendStatus(config.id, "ok")
+
+                        } catch (e: HttpException) {
+                            when (e.code()) {
+                                401, 403 -> {
+                                    Log.e(TAG, "Auth failed backend ${config.name} (${e.code()}) — pausing backend")
+                                    LogStore.add("! ${config.name}: token rejected (${e.code()}) — check token, then Test")
+                                    prefs.setBackendStatus(config.id, STATUS_AUTH_ERROR)
+                                }
+                                404 -> {
+                                    Log.e(TAG, "Not found backend ${config.name} — pausing backend")
+                                    LogStore.add("! ${config.name}: 404 — check Base URL, then Test")
+                                    prefs.setBackendStatus(config.id, STATUS_CONFIG_ERROR)
+                                }
+                                else -> {
+                                    Log.e(TAG, "HTTP ${e.code()} backend ${config.name}: ${e.message}")
+                                    LogStore.add("Server error ${config.name}: HTTP ${e.code()}")
+                                    prefs.setBackendStatus(config.id, "fail")
+                                    checkBackendDownAlert(config)
+                                }
                             }
+                        } catch (e: IOException) {
+                            Log.e(TAG, "Network error backend ${config.name}: ${e.message}")
+                            LogStore.add("Network error ${config.name}: ${e.message}")
+                            prefs.setBackendStatus(config.id, "fail")
+                            checkBackendDownAlert(config)
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Polling error backend ${config.name}: ${e.message}", e)
+                            val hint = (e.message ?: "").contains("Required value", ignoreCase = true)
+                            LogStore.add(
+                                if (hint) "Poll error ${config.name}: backend JSON missing id/to/message"
+                                else "Poll error ${config.name}: ${e.message}"
+                            )
+                            prefs.setBackendStatus(config.id, "fail")
+                            checkBackendDownAlert(config)
                         }
-                        // don't block other backends — continue
-                    } catch (e: IOException) {
-                        Log.e(TAG, "Network error backend ${config.name}: ${e.message}")
-                        LogStore.add("Network error ${config.name}: ${e.message}")
-                        prefs.setBackendStatus(config.id, "fail")
-                        // don't block other backends — continue
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Polling error backend ${config.name}: ${e.message}", e)
-                        // JSON contract mismatches used to surface as bare
-                        // "Required value 'to' missing" — point at the fix.
-                        val hint = (e.message ?: "").contains("Required value", ignoreCase = true)
-                        LogStore.add(
-                            if (hint) "Poll error ${config.name}: backend JSON missing id/to/message — update backend or app"
-                            else "Poll error ${config.name}: ${e.message}"
-                        )
-                        prefs.setBackendStatus(config.id, "fail")
                     }
                 }
 
-                if (anySuccess) backoffMs = 15_000L
-
-                val notifContent = if (totalPending > 0) "Last poll $lastPollStr | $totalPending pending" else "Last poll $lastPollStr | idle"
-                updateNotification(notifContent, prefs.sentCount, prefs.failedCount, enabled.size)
-
-                // if no backend succeeded, backoff
-                if (!anySuccess) {
-                    backoffMs = if (backoffMs == 15_000L) 30_000L else 60_000L
-                    if (backoffMs > 60_000L) backoffMs = 60_000L
-                    updateNotification("All backends error — retry ${backoffMs/1000}s", prefs.sentCount, prefs.failedCount, enabled.size)
-                    delay(backoffMs)
+                // ---------------- STEP 2: Dispatch from Local Room Queue (Online OR Offline) ----------------
+                if (prefs.isQuotaBlocked()) {
+                    val remainingMinutes = ((prefs.quotaBlockedUntil - System.currentTimeMillis()) / 60000L).coerceAtLeast(1)
+                    LogStore.setHeartbeat("⚠️ OS SMS rate limit cooldown active (~${remainingMinutes}m remaining)")
                 } else {
-                    delay(15_000)
+                    val pendingBatch = db.pendingSmsDao().getBatch(limit = 10)
+                    if (pendingBatch.isNotEmpty()) {
+                        Log.d(TAG, "Dispatching ${pendingBatch.size} SMS from Room queue")
+                        for (entity in pendingBatch) {
+                            if (prefs.isQuotaBlocked()) break
+
+                            val cfg = enabled.find { it.id == entity.backendId }
+                                ?: prefs.getBackends().find { it.id == entity.backendId }
+
+                            val normalizedTo = SmsValidator.normalizePhone(entity.to)
+                            if (normalizedTo == null || !SmsValidator.isValidMessage(entity.message)) {
+                                Log.w(TAG, "Skip invalid message id=${entity.id} to='${entity.to}'")
+                                LogStore.add("! Skip invalid message to '${entity.to}' [${entity.id}]")
+                                db.pendingSmsDao().deleteById(entity.id)
+                                if (cfg != null) {
+                                    prefs.queuePendingStatus(
+                                        cfg.id,
+                                        StatusRequest(
+                                            entity.id,
+                                            "failed",
+                                            "Invalid phone format or message body",
+                                            channel = entity.channel ?: "sms"
+                                        )
+                                    )
+                                }
+                                continue
+                            }
+
+                            // Send via SIM
+                            SmsSender.send(this, entity.toSmsMessage().copy(to = normalizedTo), cfg)
+                            db.pendingSmsDao().deleteById(entity.id)
+
+                            // Configurable throttle delay between SMS
+                            val throttleDelay = prefs.smsThrottleDelayMs
+                            if (throttleDelay > 0) {
+                                delay(throttleDelay)
+                            }
+                        }
+                    }
+                }
+
+                // ---------------- STEP 3: Post-pass notification & timing ----------------
+                val localQueueCount = db.pendingSmsDao().count()
+                prefs.pendingCount = localQueueCount
+
+                if (!isOnline) {
+                    if (localQueueCount > 0) {
+                        LogStore.setHeartbeat("Offline dispatch: $localQueueCount remaining in local queue")
+                        updateNotification("Offline mode — $localQueueCount in queue", prefs.sentCount, prefs.failedCount, enabled.size)
+                        delay(3_000L) // quickly process next batch in offline mode
+                    } else {
+                        LogStore.setHeartbeat("Offline mode — local queue empty, retry 30s")
+                        updateNotification("Offline — local queue empty", prefs.sentCount, prefs.failedCount, enabled.size)
+                        delay(30_000L)
+                    }
+                } else {
+                    val notifContent = if (localQueueCount > 0) "$localQueueCount in queue | $lastPollStr" else "Last poll $lastPollStr | idle"
+                    updateNotification(notifContent, prefs.sentCount, prefs.failedCount, enabled.size)
+                    delay(15_000L)
                 }
 
             } catch (e: CancellationException) {
@@ -241,8 +272,21 @@ class SmsForegroundService : Service() {
                 Log.e(TAG, "Polling loop error: ${e.message}", e)
                 LogStore.add("Poll error: ${e.message}")
                 updateNotification("Error — retry 15s", Prefs.getInstance(this).sentCount, Prefs.getInstance(this).failedCount, Prefs.getInstance(this).getEnabledBackends().size)
-                delay(15_000)
+                delay(15_000L)
             }
+        }
+    }
+
+    private fun checkBackendDownAlert(config: BackendConfig) {
+        val firstFail = backendFailureSince.getOrPut(config.id) { System.currentTimeMillis() }
+        val downDurationMs = System.currentTimeMillis() - firstFail
+        if (downDurationMs >= 10 * 60 * 1000L) { // 10 minutes
+            NotificationHelper.postLoudAlert(
+                this,
+                getBackendAlertId(config.id),
+                "⚠️ Gateway Down: ${config.name}",
+                "Backend ${config.name} has been unreachable for >= 10 minutes. Check network or server status."
+            )
         }
     }
 
@@ -264,7 +308,7 @@ class SmsForegroundService : Service() {
         val last = prefs.lastPoll ?: "—"
         val fullContent = "$gatewayCount gateways • $content | Sent:$sent Failed:$failed | Last:$last"
 
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+        return NotificationCompat.Builder(this, NotificationHelper.CHANNEL_SERVICE)
             .setContentTitle(getString(R.string.notif_title))
             .setContentText(fullContent)
             .setStyle(NotificationCompat.BigTextStyle().bigText(fullContent))
@@ -276,15 +320,6 @@ class SmsForegroundService : Service() {
             .build()
     }
 
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID, getString(R.string.channel_name), NotificationManager.IMPORTANCE_LOW
-            ).apply { description = getString(R.string.channel_desc) }
-            (getSystemService(NotificationManager::class.java)).createNotificationChannel(channel)
-        }
-    }
-
     private fun isNetworkAvailable(): Boolean {
         val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val nw = cm.activeNetwork ?: return false
@@ -294,9 +329,6 @@ class SmsForegroundService : Service() {
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
-        // Swipe-away kills the process on many OEMs — try to come back if ON.
-        // On Android 12+ a background FGS start throws
-        // ForegroundServiceStartNotAllowedException: fall back to WorkManager.
         try {
             if (Prefs.getInstance(this).isServiceEnabled()) {
                 Log.d(TAG, "Task removed — restarting (service is ON)")
@@ -322,11 +354,9 @@ class SmsForegroundService : Service() {
         scope.cancel()
         try {
             if (!Prefs.getInstance(this).isServiceEnabled()) {
-                // Explicit user stop: take the fallback down too.
                 WorkManager.getInstance(this).cancelUniqueWork(WORK_NAME)
                 Log.d(TAG, "WorkManager cancelled (user stop)")
             } else {
-                // System kill / crash: keep the fallback alive so polling resumes.
                 val work = PeriodicWorkRequestBuilder<SmsPollWorker>(15, TimeUnit.MINUTES).build()
                 WorkManager.getInstance(this).enqueueUniquePeriodicWork(
                     WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, work
@@ -341,15 +371,12 @@ class SmsForegroundService : Service() {
 
     companion object {
         const val TAG = "SmsGateway"
-        const val CHANNEL_ID = "sms_gateway"
         const val NOTIF_ID = 1001
         const val WORK_NAME = "sms_poll_fallback"
         const val ACTION_STOP = "STOP_SERVICE"
         const val ACTION_CLEAR_ACKED = "CLEAR_ACKED"
         const val ACTION_SEND_NOW = "SEND_NOW"
-        /** Backend paused: token rejected — resume via Test/Edit. */
         const val STATUS_AUTH_ERROR = "auth-error"
-        /** Backend paused: bad URL/path — resume via Test/Edit. */
         const val STATUS_CONFIG_ERROR = "config-error"
 
         @Volatile

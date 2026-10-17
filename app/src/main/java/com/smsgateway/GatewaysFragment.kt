@@ -100,6 +100,7 @@ class GatewaysFragment : Fragment() {
         val etName = dialogView.findViewById<TextInputEditText>(R.id.etName)
         val etUrl = dialogView.findViewById<TextInputEditText>(R.id.etUrl)
         val etToken = dialogView.findViewById<TextInputEditText>(R.id.etToken)
+        val etCertPin = dialogView.findViewById<TextInputEditText>(R.id.etCertPin)
         val switchEnabled = dialogView.findViewById<SwitchMaterial>(R.id.switchEnabled)
         val tvTitle = dialogView.findViewById<TextView>(R.id.tvDialogTitle)
         val btnTest = dialogView.findViewById<MaterialButton>(R.id.btnTest)
@@ -109,6 +110,7 @@ class GatewaysFragment : Fragment() {
             etName.setText(existing.name)
             etUrl.setText(existing.baseUrl)
             etToken.setText(existing.token)
+            etCertPin.setText(existing.certPin ?: "")
             switchEnabled.isChecked = existing.enabled
         }
 
@@ -119,6 +121,7 @@ class GatewaysFragment : Fragment() {
         btnTest.setOnClickListener {
             val url = etUrl.text?.toString()?.trim() ?: ""
             val token = etToken.text?.toString()?.trim() ?: ""
+            val certPin = etCertPin.text?.toString()?.trim()?.ifBlank { null }
             val name = etName.text?.toString()?.trim() ?: "Test"
             if (!url.startsWith("https://")) {
                 etUrl.error = "Must start with https://"
@@ -135,7 +138,8 @@ class GatewaysFragment : Fragment() {
                 name = name.ifBlank { "Test" },
                 baseUrl = url,
                 token = token,
-                enabled = true
+                enabled = true,
+                certPin = certPin
             )
             CoroutineScope(Dispatchers.IO).launch {
                 try {
@@ -169,16 +173,17 @@ class GatewaysFragment : Fragment() {
             val name = etName.text?.toString()?.trim() ?: ""
             val url = etUrl.text?.toString()?.trim() ?: ""
             val token = etToken.text?.toString()?.trim() ?: ""
+            val certPin = etCertPin.text?.toString()?.trim()?.ifBlank { null }
             if (name.isBlank()) { etName.error = "Required"; return@setOnClickListener }
             if (!url.startsWith("https://")) { etUrl.error = "Must start with https://"; Toast.makeText(requireContext(), getString(R.string.msg_need_https), Toast.LENGTH_LONG).show(); return@setOnClickListener }
             if (token.isBlank()) { etToken.error = "Required"; return@setOnClickListener }
             try {
                 if (existing != null) {
-                    val updated = existing.copy(name = name, baseUrl = url.trim().trimEnd('/'), token = token, enabled = switchEnabled.isChecked)
+                    val updated = existing.copy(name = name, baseUrl = url.trim().trimEnd('/'), token = token, enabled = switchEnabled.isChecked, certPin = certPin)
                     prefs.updateBackend(updated)
                     LogStore.add("Updated gateway: $name")
                 } else {
-                    val cfg = BackendConfig(name = name, baseUrl = url.trim().trimEnd('/'), token = token, enabled = switchEnabled.isChecked)
+                    val cfg = BackendConfig(name = name, baseUrl = url.trim().trimEnd('/'), token = token, enabled = switchEnabled.isChecked, certPin = certPin)
                     prefs.addBackend(cfg)
                     LogStore.add("Added gateway: $name")
                 }

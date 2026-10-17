@@ -68,5 +68,24 @@ class LogStoreTest {
         assertEquals(1, LogStore.getAll().size)
         assertTrue(LogStore.getAll()[0].contains("2 pending"))
     }
+
+    @Test
+    fun testPiiMasking() {
+        val raw = "Sent SMS to 919876543210 successfully"
+        val masked = LogStore.maskPii(raw)
+        assertEquals("Sent SMS to 9198****3210 successfully", masked)
+
+        val intl = "Failed to send to +919123456789"
+        val maskedIntl = LogStore.maskPii(intl)
+        assertEquals("Failed to send to +9191****6789", maskedIntl)
+    }
+
+    @Test
+    fun testMaxRowsCap() {
+        for (i in 1..1050) {
+            LogStore.add("Log entry $i")
+        }
+        assertEquals(LogStore.MAX_LOG_ROWS, LogStore.getAll().size)
+    }
 }
 

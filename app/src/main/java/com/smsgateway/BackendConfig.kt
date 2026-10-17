@@ -12,7 +12,8 @@ data class BackendConfig(
     val enabled: Boolean = true,
     val createdAt: Long = System.currentTimeMillis(),
     val lastStatus: String? = null, // ok / fail / null
-    val lastPollAt: Long? = null
+    val lastPollAt: Long? = null,
+    val certPin: String? = null // optional SHA-256 pin, e.g. sha256/...
 ) {
     fun normalizedBaseUrl(): String? {
         if (!baseUrl.startsWith("https://")) return null

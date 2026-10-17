@@ -1,4 +1,4 @@
-﻿package com.smsgateway
+package com.smsgateway
 
 import android.app.Activity
 import android.app.PendingIntent
@@ -59,11 +59,30 @@ object SmsSender {
     )
 
     /**
-     * Uses the user-selected SIM (Settings) if set, else the system default SMS SIM.
-     * Falls back to default if the SIM was removed or the id is invalid.
+     * Uses the user-selected SIM (Settings) if set, auto-rotates if multi-SIM mode,
+     * else the system default SMS SIM. Falls back to default if SIM is invalid.
      */
     private fun pickSmsManager(context: Context): SmsManager {
-        val subId = try { Prefs.getInstance(context).simSubscriptionId } catch (_: Exception) { -1 }
+        val prefs = Prefs.getInstance(context)
+        val selectedSubId = try { prefs.simSubscriptionId } catch (_: Exception) { -1 }
+        val subId = if (selectedSubId == Prefs.SIM_MODE_AUTO_ROTATE) {
+            val sm = context.getSystemService(android.telephony.SubscriptionManager::class.java)
+            val subs = try {
+                sm?.activeSubscriptionInfoList?.map { it.subscriptionId } ?: emptyList()
+            } catch (_: Exception) {
+                emptyList()
+            }
+            if (subs.isNotEmpty()) {
+                val rotated = prefs.getNextRotatedSimSubId(subs)
+                Log.d(TAG, "Multi-SIM auto-rotate chosen subId=$rotated out of $subs")
+                rotated
+            } else {
+                -1
+            }
+        } else {
+            selectedSubId
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val base = context.getSystemService(SmsManager::class.java) ?: SmsManager.getDefault()
             val targetSubId = if (subId >= 0) {
@@ -152,7 +171,7 @@ object SmsSender {
             pendingSends.remove(msg.id)
             LogStore.add("✗ Failed to ${msg.to} [${msg.id}]: $error")
             reportStatus(appContext, statusApi, config, msg, "failed", error)
-            prefs.incrementFailed()
+            if (config != null) prefs.recordGatewayFailed(config.id) else prefs.incrementFailed()
         }
 
         try {
@@ -181,8 +200,12 @@ object SmsSender {
                                 SmsManager.RESULT_ERROR_NO_SERVICE -> "NO_SERVICE"
                                 SmsManager.RESULT_ERROR_NULL_PDU -> "NULL_PDU"
                                 SmsManager.RESULT_ERROR_RADIO_OFF -> "RADIO_OFF"
+                                SmsManager.RESULT_ERROR_LIMIT_EXCEEDED -> "LIMIT_EXCEEDED (Android OS quota reached)"
                                 17 -> "CARRIER_BARRED_17 (Carrier barred SMS: check SMS pack or DLT/OTP template policy)"
                                 else -> "CARRIER_ERROR_$resultCode (networkCode=$carrierErr)"
+                            }
+                            if (resultCode == SmsManager.RESULT_ERROR_LIMIT_EXCEEDED) {
+                                onLimitExceeded(appContext)
                             }
                         }
                     }
@@ -230,7 +253,7 @@ object SmsSender {
                     // how to confirm it with the stock Messages app.
                     LogStore.add("✗ No carrier result in 90s to ${msg.to} [${msg.id}] — check SIM plan/balance")
                     reportStatus(appContext, resolveApi(appContext, config), config, msg, "failed", error)
-                    prefs.incrementFailed()
+                    if (config != null) prefs.recordGatewayFailed(config.id) else prefs.incrementFailed()
                 }
             }
             probe.timeout = timeout
@@ -310,13 +333,13 @@ object SmsSender {
             Log.e(TAG, "SecurityException sending SMS: ${e.message}")
             LogStore.add("✗ SecurityException: ${e.message} to ${msg.to} [${msg.id}]")
             reportStatus(appContext, statusApi, config, msg, "failed", "SecurityException: ${e.message}")
-            Prefs.getInstance(appContext).incrementFailed()
+            if (config != null) prefs.recordGatewayFailed(config.id) else Prefs.getInstance(appContext).incrementFailed()
         } catch (e: Exception) {
             abortSend(appContext, msg.id, probe)
             Log.e(TAG, "Exception sending SMS: ${e.message}", e)
             LogStore.add("✗ Exception: ${e.message} to ${msg.to} [${msg.id}]")
             reportStatus(appContext, statusApi, config, msg, "failed", e.message)
-            Prefs.getInstance(appContext).incrementFailed()
+            if (config != null) prefs.recordGatewayFailed(config.id) else Prefs.getInstance(appContext).incrementFailed()
         }
     }
 
@@ -326,6 +349,18 @@ object SmsSender {
         probe.timeout?.let { try { Handler(appContext.mainLooper).removeCallbacks(it) } catch (_: Exception) {} }
         unregisterQuietly(appContext, probe.sentReceiver)
         pendingDelivered.remove(msgId)?.let { unregisterQuietly(appContext, it) }
+    }
+
+    private fun onLimitExceeded(appContext: Context) {
+        val cooldownMs = 15 * 60 * 1000L // 15 min pause
+        Prefs.getInstance(appContext).quotaBlockedUntil = System.currentTimeMillis() + cooldownMs
+        LogStore.add("⚠️ RESULT_ERROR_LIMIT_EXCEEDED: Android OS SMS rate limit reached (~30 per 15 min)! Paused for 15m. Run: adb shell settings put global sms_outgoing_check_max_count 10000")
+        NotificationHelper.postLoudAlert(
+            appContext,
+            NotificationHelper.NOTIF_ID_QUOTA_ALERT,
+            "⚠️ SMS Limit Exceeded by Android OS!",
+            "Android OS blocked SMS sending (~30/15min quota). Paused for 15m. Run adb command to raise limit or wait."
+        )
     }
 
     /** Called once all parts of a message have reported. Posts ONE status. */
@@ -347,7 +382,7 @@ object SmsSender {
         if (st.failed.get()) {
             val error = st.firstError ?: "UNKNOWN"
             LogStore.add("✗ Failed [$channelTag] $error to ${msg.to} [${msg.id}]")
-            prefs.incrementFailed()
+            if (config != null) prefs.recordGatewayFailed(config.id) else prefs.incrementFailed()
             pendingDelivered.remove(msg.id)?.let { unregisterQuietly(appContext, it) }
             reportStatus(appContext, statusApi, config, msg, "failed", error)
         } else {
@@ -355,7 +390,10 @@ object SmsSender {
             // status report itself fails below (it goes to the outbox instead).
             prefs.markAcked(msg.id)
             LogStore.add("✓ Sent [$channelTag] to ${msg.to} [${msg.id}] via ${config?.name ?: "gateway"}")
-            prefs.incrementSent()
+            if (config != null) prefs.recordGatewaySent(config.id) else {
+                prefs.incrementSent()
+                prefs.recordSmsSentTimestamp()
+            }
             Log.d(TAG, "SMS sent OK id=${msg.id} to=${msg.to} channel=${msg.channel}")
             reportStatus(appContext, statusApi, config, msg, "sent", null)
         }

@@ -20,6 +20,10 @@ class SmsPollWorker(
             Log.d("SmsGateway", "Worker: service switched OFF, skip")
             return Result.success()
         }
+        if (prefs.isQuotaBlocked()) {
+            Log.w("SmsGateway", "Worker: Android SMS Quota is blocked, skip")
+            return Result.success()
+        }
         val enabled = prefs.getEnabledBackends()
         if (enabled.isEmpty()) {
             Log.d("SmsGateway", "Worker: no enabled backends, skip")
@@ -43,6 +47,10 @@ class SmsPollWorker(
                 val pending = api.getPending(limit = 10)
                 Log.d("SmsGateway", "Worker: ${config.name} fetched ${pending.messages.size} pending")
                 for (msg in pending.messages) {
+                    if (prefs.isQuotaBlocked()) {
+                        Log.w("SmsGateway", "Worker: Quota hit during dispatch, stopping batch")
+                        break
+                    }
                     if (prefs.isAcked(msg.id)) {
                         Log.d("SmsGateway", "Worker skip already-acked id=${msg.id}")
                         continue
@@ -57,6 +65,7 @@ class SmsPollWorker(
                     }
                     try {
                         SmsSender.send(ctx, msg.copy(to = normalizedTo), config)
+                        kotlinx.coroutines.delay(prefs.smsThrottleDelayMs)
                     } catch (e: Exception) {
                         Log.e("SmsGateway", "Worker send failed ${config.name} ${msg.id}: ${e.message}")
                         try { api.postStatus(StatusRequest(msg.id, "failed", e.message, channel = msg.channel ?: "sms")) } catch (_: Exception) {}

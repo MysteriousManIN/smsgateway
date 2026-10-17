@@ -4,7 +4,7 @@ Lightweight Android SMS gateway that sends SMS automatically through the phone's
 
 - **App name:** Sandesh
 - **Application ID:** `com.sandesh.app`
-- **minSdk 24 · targetSdk 34 · Kotlin · Material 3**
+- **minSdk 24 · targetSdk 35 · Kotlin · Material 3**
 
 ---
 
